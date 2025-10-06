@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="D365POS.SignInPage"
+             Title="Sign In"
+             NavigationPage.HasNavigationBar="False">
+
+    <Grid>
+        <!-- Two main columns: Left for Logo & Text, Right for Sign In Panel -->
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="3*" />
+            <ColumnDefinition Width="2*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Left Section -->
+        <Grid Grid.Column="0"
+          Padding="40"
+          VerticalOptions="Fill"
+          HorizontalOptions="Center">
+
+            <!-- Define two rows: one for logo, one for time/date -->
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- Logo -->
+            <VerticalStackLayout Grid.Row="0"
+                         HorizontalOptions="Center"
+                         VerticalOptions="Center">
+                <Image Source="logo.png"
+                   HeightRequest="200"
+                   HorizontalOptions="Center"/>
+            </VerticalStackLayout>
+
+            <!-- Time + Date at the bottom -->
+            <StackLayout Grid.Row="1"
+                 VerticalOptions="End"
+                 HorizontalOptions="Start"
+                 Margin="0,20,0,0">
+                <Label x:Name="lblTime"
+                   FontSize="36"
+                   Text="11:25 AM"/>
+                <Label x:Name="lblDate"
+                   FontSize="14"
+                   Text="09/30/2025"/>
+            </StackLayout>
+        </Grid>
+        <!-- Right Section (Login Panel) -->
+        <Frame Grid.Column="1"
+               CornerRadius="20"
+               Padding="30"
+               WidthRequest="350"
+               VerticalOptions="Center"
+               HorizontalOptions="Center">
+
+            <VerticalStackLayout Spacing="20">
+                <Label Text="Sign in"
+                       FontSize="28"
+                       FontAttributes="Bold" />
+
+                <!-- Store -->
+                <Label Text="Store / Register"
+                       TextColor="Gray"
+                       FontSize="14"/>
+                <Label Text="Creek Harbour / CHR3"
+                       FontSize="16"/>
+
+                <!-- Staff -->
+                <Label Text="Staff" FontSize="14"/>
+                <Grid ColumnSpacing="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <!-- Avatar -->
+                        <ColumnDefinition Width="*"/>
+                        <!-- Entry expands fully -->
+                    </Grid.ColumnDefinitions>
+                    <!-- Avatar Circle -->
+                    <Frame Grid.Column="0"
+                           WidthRequest="40"
+                           HeightRequest="40"
+                           CornerRadius="20"
+                           BackgroundColor="#1976D2"
+                           VerticalOptions="Center">
+                    </Frame>
+
+                    <!-- User Id Entry -->
+                    <Entry x:Name="UserIdEntry"
+                           Grid.Column="1"
+                           Placeholder="Enter User Id"
+                           VerticalOptions="Center"
+                           HorizontalOptions="Fill"/>
+                </Grid>
+
+                <!-- Password -->
+                <Label Text="Password" FontSize="14"/>
+                <Entry x:Name="PasswordEntry"
+                       IsPassword="True"
+                       Placeholder="Enter password"
+                       HorizontalOptions="Fill"/>
+
+                <!-- Sign In Button -->
+                <Button x:Name="SignInButton"
+                        Text="Sign in"
+                        BackgroundColor="#A66E43"
+                        FontAttributes="Bold"
+                        CornerRadius="5"
+                        HeightRequest="50"
+                        Clicked="OnSignInClicked"/>
+            </VerticalStackLayout>
+        </Frame>
+        
+        <!-- FULL SCREEN LOADER -->
+        <Grid x:Name="loaderOverlay"
+              IsVisible="False"
+              VerticalOptions="Fill"
+              HorizontalOptions="Fill"
+              Grid.ColumnSpan="2">
+            <ActivityIndicator x:Name="activityIndicator"
+                        Color="#A66E43"
+                        IsRunning="True"
+                        WidthRequest="60"
+                        HeightRequest="60"
+                        VerticalOptions="Center"
+                        HorizontalOptions="Center"/>
+        </Grid>
+    </Grid>
+</ContentPage>

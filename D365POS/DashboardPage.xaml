@@ -1,0 +1,80 @@
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="D365POS.DashboardPage"
+             Title="POS Dashboard">
+
+    <Grid Padding="20"
+          ColumnDefinitions="2*,3*"
+          RowDefinitions="*">
+
+        <!-- Left Panel -->
+        <StackLayout Grid.Column="0" Spacing="15" Margin="10,0,50,30">
+            <Label Text="Get Started"
+                   FontSize="20"
+                   FontAttributes="Bold" />
+
+            <!-- Large Sale Button -->
+            <Button Text="Sale"
+                    BackgroundColor="#A66E43"
+                    FontSize="40"
+                    CornerRadius="8"
+                    HeightRequest="250"
+                    Clicked="OnSaleClicked"/>
+
+            <Grid ColumnDefinitions="*,*" RowDefinitions="*" ColumnSpacing="10" Margin="0,30,0,0" HeightRequest="80">
+                <!-- Smaller Buttons -->
+                <Button Grid.Column="0" Text="Price check" BackgroundColor="#A66E43" CornerRadius="8"/>
+                <Button Grid.Column="1" Text="Inventory lookup" BackgroundColor="#A66E43" CornerRadius="8"/>
+            </Grid>
+
+            <Grid ColumnDefinitions="*,*,*,*" RowDefinitions="*" ColumnSpacing="10" HeightRequest="80">
+                <!-- Smaller Buttons -->
+                <Button Grid.Column="0" Text="Recall&#10;transaction" BackgroundColor="#A66E43" CornerRadius="8"/>
+                <Button Grid.Column="1" Text="Tender&#10;removal" BackgroundColor="#A66E43" CornerRadius="8"/>
+                <Button Grid.Column="2" Text="Show journal" BackgroundColor="#A66E43" CornerRadius="8"/>
+                <Button Grid.Column="3" Text="Reports" BackgroundColor="#A66E43" CornerRadius="8"/>
+            </Grid>
+
+
+        </StackLayout>
+
+        <!-- Right Panel -->
+        <StackLayout Grid.Column="1" Spacing="15" Margin="100,0,0,0">
+            <Label Text="Tasks"
+                   FontSize="20"
+                   FontAttributes="Bold" />
+
+            <Grid ColumnDefinitions="2*,2*,2*,2*,*"
+                  RowDefinitions="Auto,Auto,Auto,Auto,Auto"
+                  ColumnSpacing="15"
+                  RowSpacing="20">
+
+                <!-- Row 1 -->
+                <Button Grid.Row="0" Grid.Column="0" Text="Open drawer" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
+                <Button Grid.Row="0" Grid.Column="1" Text="Price check" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
+                <Button Grid.Row="0" Grid.Column="2" Text="Tender declaration" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
+                <Button Grid.Row="0" Grid.Column="3" Text="Manage shifts" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
+
+
+                <!-- Row 2 -->
+                <Button Grid.Row="1" Grid.Column="0" Text="Tender removal" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
+                <Button Grid.Row="1" Grid.Column="1" Text="Blind close shift" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
+                <Button Grid.Row="1" Grid.Column="2" Text="Suspend shift" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
+                <Button Grid.Row="1" Grid.Column="3" Text="Close shift" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
+
+                <!-- Row 3 -->
+                <Button Grid.Row="2" Grid.Column="0" Text="Print Z" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
+                <Button Grid.Row="2" Grid.Column="1" Text="Declare start" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
+                <Button Grid.Row="2" Grid.Column="2" Text="Bank drop" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
+                <Button Grid.Row="2" Grid.Column="3" Text="Print X" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
+
+                <!-- Row 4 -->
+                <Button Grid.Row="3" Grid.Column="0" Text="Deposit override" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
+                <Button Grid.Row="3" Grid.Column="1" Text="Recall transaction" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
+                <Button Grid.Row="3" Grid.Column="2" Text="Activate device" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
+                <Button Grid.Row="3" Grid.Column="3" Text="Select hardware station" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
+
+            </Grid>
+        </StackLayout>
+    </Grid>
+</ContentPage>

@@ -1,0 +1,160 @@
+﻿<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="D365POS.SalesPage"
+             Title="Sales">
+
+    <!-- 🧱 MAIN CONTAINER -->
+    <Grid x:Name="MainContainer">
+        <!-- ======================================== -->
+        <!-- 1️⃣ SALES PAGE CONTENT -->
+        <!-- ======================================== -->
+        <Grid x:Name="SalesContent" RowDefinitions="Auto,Auto,*" Padding="10">
+
+            <!-- 🔍 Search Bar -->
+            <SearchBar x:Name="ProductSearchBar"
+                       Grid.Row="0"
+                       Placeholder="Search by barcode, ID, or item name"
+                       TextChanged="OnSearchTextChanged"
+                       SearchButtonPressed="OnSearchButtonPressed"
+                       HeightRequest="45"
+                       Margin="0,0,0,5"/>
+
+            <!-- 🧾 Product Table + Buttons (Your existing content below) -->
+            <Grid Grid.Row="2" ColumnDefinitions="5*,3*" Padding="0">
+                <!-- (Everything inside your existing product and button grid remains unchanged) -->
+                <!-- LEFT SIDE -->
+                <Grid Grid.Column="0" RowDefinitions="*,Auto" Margin="0,0,20,0">
+
+                    <!-- Product Table -->
+                    <Frame Grid.Row="0" Padding="10">
+                        <Grid RowDefinitions="Auto,*" RowSpacing="10">
+                            <Grid Grid.Row="0" ColumnDefinitions="2*,4*,*,*,*" Padding="5">
+                                <Label Text="Bar code" FontAttributes="Bold" Grid.Column="0"/>
+                                <Label Text="Item" FontAttributes="Bold" Grid.Column="1"/>
+                                <Label Text="Quantity" FontAttributes="Bold" Grid.Column="2"/>
+                                <Label Text="UOM" FontAttributes="Bold" Grid.Column="3"/>
+                                <Label Text="Total(with tax)" FontAttributes="Bold" Grid.Column="4"/>
+                            </Grid>
+
+                            <CollectionView x:Name="ProductsList"
+                                            Grid.Row="1"
+                                            ItemsSource="{Binding AddedProducts}">
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid ColumnDefinitions="2*,4*,*,*,*" Padding="5">
+                                            <Label Text="{Binding ItemBarCode}" Grid.Column="0"/>
+                                            <Label Text="{Binding ItemName}" Grid.Column="1"/>
+                                            <Label Text="{Binding Quantity}" Grid.Column="2"/>
+                                            <Label Text="{Binding Unit}" Grid.Column="3"/>
+                                            <Label Text="{Binding PLU}" Grid.Column="4"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
+                        </Grid>
+                    </Frame>
+
+                    <!-- Customer + Totals -->
+                    <Frame Grid.Row="1" Padding="15" Margin="0,10,0,0">
+                        <StackLayout Spacing="15">
+                            <Label Text="Add customer to this transaction" FontAttributes="Bold"/>
+                            <Button Text="Add customer"
+                                    BackgroundColor="#A66E43"
+                                    CornerRadius="8"
+                                    HorizontalOptions="Start"/>
+                            <Grid ColumnDefinitions="*,*,*,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="8">
+                                <Label Text="Lines" Grid.Row="0" Grid.Column="0"/>
+                                <Label Text="0" Grid.Row="0" Grid.Column="1"/>
+                                <Label Text="Subtotal" Grid.Row="0" Grid.Column="2" HorizontalOptions="End"/>
+                                <Label Text="0.00" Grid.Row="0" Grid.Column="3" HorizontalOptions="End"/>
+                                <Label Text="Discounts" Grid.Row="1" Grid.Column="0"/>
+                                <Label Text="0.00" Grid.Row="1" Grid.Column="1"/>
+                                <Label Text="Payments" Grid.Row="1" Grid.Column="2" HorizontalOptions="End"/>
+                                <Label Text="0.00" Grid.Row="1" Grid.Column="3" HorizontalOptions="End"/>
+                                <Label Text="Tax" Grid.Row="2" Grid.Column="0"/>
+                                <Label Text="0.00" Grid.Row="2" Grid.Column="1"/>
+                                <Label Text="Amount due" TextColor="#A66E43" FontAttributes="Bold"
+                                       Grid.Row="2" Grid.Column="2" HorizontalOptions="End"/>
+                                <Label Text="0.00" TextColor="#A66E43" FontAttributes="Bold"
+                                       Grid.Row="2" Grid.Column="3" HorizontalOptions="End"/>
+                            </Grid>
+                        </StackLayout>
+                    </Frame>
+                </Grid>
+
+                <!-- RIGHT SIDE (buttons remain unchanged) -->
+                <Grid Grid.Column="1" RowDefinitions="*,Auto" RowSpacing="10">
+                    <Grid Grid.Row="0"
+                          ColumnDefinitions="*,*"
+                          RowDefinitions="Auto,Auto,Auto,Auto,Auto"
+                          ColumnSpacing="10"
+                          RowSpacing="10"
+                          Margin="0,20,0,0">
+                        <Button Grid.Row="0" Grid.Column="0" Text="Set quantity" BackgroundColor="#A66E43" HeightRequest="60"/>
+                        <Button Grid.Row="0" Grid.Column="1" Text="Change unit of measure" BackgroundColor="#A66E43" HeightRequest="60"/>
+                        <Button Grid.Row="1" Grid.Column="0" Text="Void product" BackgroundColor="#A66E43" HeightRequest="60"/>
+                        <Button Grid.Row="1" Grid.Column="1" Text="Void transaction" BackgroundColor="#A66E43" HeightRequest="60"/>
+                        <Button Grid.Row="2" Grid.Column="0" Text="Transaction comment reports" BackgroundColor="#A66E43" HeightRequest="60"/>
+                        <Button Grid.Row="2" Grid.Column="1" Text="View reports" BackgroundColor="#A66E43" HeightRequest="60"/>
+                        <Button Grid.Row="3" Grid.Column="0" Text="Suspend transaction" BackgroundColor="#A66E43" HeightRequest="60"/>
+                        <Button Grid.Row="3" Grid.Column="1" Text="Void payment" BackgroundColor="#A66E43" HeightRequest="60"/>
+                        <Button Grid.Row="4" Grid.Column="0" Text="Price check" BackgroundColor="#A66E43" HeightRequest="60"/>
+                        <Button Grid.Row="4" Grid.Column="1" Text="Recall transaction" BackgroundColor="#A66E43" HeightRequest="60"/>
+                    </Grid>
+
+                    <!-- Payment Buttons -->
+                    <Grid Grid.Row="1"
+                          ColumnDefinitions="*,*"
+                          RowDefinitions="Auto,Auto"
+                          ColumnSpacing="10"
+                          RowSpacing="10">
+                        <Button Grid.Row="0" Grid.Column="0" Text="Pay Cash" BackgroundColor="#A66E43" HeightRequest="60"/>
+                        <Button Grid.Row="0" Grid.Column="1" Text="Pay Card" BackgroundColor="#A66E43" HeightRequest="60"/>
+                        <Button Grid.Row="1" Grid.Column="0" Text="Pay Quick Cash" BackgroundColor="#A66E43" HeightRequest="60"/>
+                        <Button Grid.Row="1" Grid.Column="1" Text="Pay Customer Account" BackgroundColor="#A66E43" HeightRequest="60"/>
+                    </Grid>
+                </Grid>
+            </Grid>
+        </Grid>
+
+        <!-- ======================================== -->
+        <!-- 2️⃣ FULL-SCREEN SEARCH OVERLAY -->
+        <!-- ======================================== -->
+        <Grid x:Name="SearchOverlay"
+              IsVisible="{Binding IsSearchListVisible}"
+              Padding="10,60,10,10"
+              RowDefinitions="Auto,*"
+              VerticalOptions="Start"
+              ZIndex="1">
+
+            <Frame CornerRadius="10"
+                   Padding="5"
+                   HasShadow="True">
+
+                <CollectionView x:Name="SearchResultsList"
+                                ItemsSource="{Binding FilteredProducts}"
+                                SelectionMode="Single"
+                                SelectionChanged="OnProductSelected"
+                                HeightRequest="300">
+                    <CollectionView.Header>
+                        <Grid Padding="10" ColumnDefinitions="2*,*,Auto">
+                            <Label Text="Item Name" FontAttributes="Bold"/>
+                            <Label Text="Barcode" FontAttributes="Bold" Grid.Column="1"/>
+                            <Label Text="Unit" FontAttributes="Bold" Grid.Column="2"/>
+                        </Grid>
+                    </CollectionView.Header>
+
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Padding="10" Margin="0,1" ColumnDefinitions="2*,*,Auto">
+                                <Label Text="{Binding ItemName}" />
+                                <Label Text="{Binding ItemBarCode}" Grid.Column="1" />
+                                <Label Text="{Binding Unit}" Grid.Column="2" />
+                            </Grid>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </Frame>
+        </Grid>
+    </Grid>
+</ContentPage>
