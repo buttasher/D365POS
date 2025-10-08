@@ -10,32 +10,53 @@ namespace D365POS.Services
 
         public DatabaseService()
         {
-           _connection = new SQLiteAsyncConnection(Path.Combine(FileSystem.AppDataDirectory, DB_Name));
-           _connection.CreateTableAsync<SalesTable>();
+            _connection = new SQLiteAsyncConnection(Path.Combine(FileSystem.AppDataDirectory, DB_Name));
 
+            // Create all tables
+            _connection.CreateTableAsync<SalesTable>().Wait();
+            _connection.CreateTableAsync<StoreProducts>().Wait();
         }
 
+        // ==========================
+        // SalesTable Methods
+        // ==========================
         public async Task<SalesTable> GetById(int id)
         {
-            return await _connection.Table<SalesTable>().Where(i => i.SalesId == id).FirstOrDefaultAsync();
+            return await _connection.Table<SalesTable>()
+                                    .Where(i => i.SalesId == id)
+                                    .FirstOrDefaultAsync();
         }
+
         public async Task Create(SalesTable salesTable)
         {
             await _connection.InsertAsync(salesTable);
         }
-        public async Task Update(SalesTable salesTable)
-        {
-            await _connection.UpdateAsync(salesTable);
-        }
-        public async Task Delete(SalesTable salesTable)
-        {
-            await _connection.DeleteAsync(salesTable);
-        }
-        //Added method to get all products from StoreProducts table 
+
+        // ==========================
+        // StoreProducts Methods
+        // ==========================
+        // Get all products
         public async Task<List<StoreProducts>> GetAllProducts()
         {
             return await _connection.Table<StoreProducts>().ToListAsync();
         }
 
+        // Insert single product
+        public async Task InsertProduct(StoreProducts product)
+        {
+            await _connection.InsertAsync(product);
+        }
+
+        // Insert multiple products
+        public async Task InsertProducts(List<StoreProducts> products)
+        {
+            await _connection.InsertAllAsync(products);
+        }
+
+        // Delete all products (useful before syncing)
+        public async Task DeleteAllProducts()
+        {
+            await _connection.DeleteAllAsync<StoreProducts>();
+        }
     }
 }

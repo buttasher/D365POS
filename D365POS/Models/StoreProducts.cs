@@ -1,31 +1,41 @@
 ﻿using SQLite;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace D365POS.Models
 {
     [Table("StoreProducts")]
-    public class StoreProducts
+    public class StoreProducts : INotifyPropertyChanged
     {
         [PrimaryKey, AutoIncrement]
         public int StoreProductId { get; set; }
+
         public string ItemId { get; set; }
-        public string Unit { get; set; }
-        public string StoreId { get; set; }
+        public string Description { get; set; }
+        public string DescriptionAr { get; set; }
+        public string UnitId { get; set; }
+        public string PLUCode { get; set; }
         public string ItemBarCode { get; set; }
-        public string ItemName { get; set; }
-        public string ItemNameArabic { get; set; }
-        public decimal PLU { get; set; }
-        public Status ProductStatus { get; set; }
-        public int Category { get; set; }
         public string SalesTaxGroup { get; set; }
 
-        public decimal Quantity { get; set; }
-        public enum Status
+        private decimal _quantity;
+        public decimal Quantity
         {
-            None = 0,
-            Publish = 1,
-            Active = 2,
-            Inactive = 3
+            get => _quantity;
+            set
+            {
+                if (_quantity != value)
+                {
+                    _quantity = value;
+                    OnPropertyChanged();
+                }
+            }
         }
 
+        public event PropertyChangedEventHandler PropertyChanged;
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
 }

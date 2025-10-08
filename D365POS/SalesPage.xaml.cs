@@ -51,7 +51,7 @@ namespace D365POS
             keyword = keyword?.ToLower() ?? string.Empty;
 
             var filtered = _allProducts
-                .Where(p => p.ItemName.ToLower().Contains(keyword)
+                .Where(p => p.Description.ToLower().Contains(keyword)
                          || p.ItemBarCode.ToLower().Contains(keyword)
                          || p.ItemId.ToLower().Contains(keyword))
                 .ToList();
@@ -85,7 +85,7 @@ namespace D365POS
             var match = _allProducts.FirstOrDefault(p =>
                 p.ItemBarCode.ToLower() == keyword ||
                 p.ItemId.ToLower() == keyword ||
-                p.ItemName.ToLower().Contains(keyword));
+                p.Description.ToLower().Contains(keyword));
 
             if (match != null)
             {

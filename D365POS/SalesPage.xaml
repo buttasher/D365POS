@@ -1,16 +1,15 @@
 ﻿<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="D365POS.SalesPage"
+             xmlns:controls="clr-namespace:D365POS.Controls"
              Title="Sales">
 
-    <!-- 🧱 MAIN CONTAINER -->
+   
     <Grid x:Name="MainContainer">
-        <!-- ======================================== -->
-        <!-- 1️⃣ SALES PAGE CONTENT -->
-        <!-- ======================================== -->
+       
         <Grid x:Name="SalesContent" RowDefinitions="Auto,Auto,*" Padding="10">
 
-            <!-- 🔍 Search Bar -->
+           
             <SearchBar x:Name="ProductSearchBar"
                        Grid.Row="0"
                        Placeholder="Search by barcode, ID, or item name"
@@ -19,16 +18,16 @@
                        HeightRequest="45"
                        Margin="0,0,0,5"/>
 
-            <!-- 🧾 Product Table + Buttons (Your existing content below) -->
+            
             <Grid Grid.Row="2" ColumnDefinitions="5*,3*" Padding="0">
-                <!-- (Everything inside your existing product and button grid remains unchanged) -->
+               
                 <!-- LEFT SIDE -->
                 <Grid Grid.Column="0" RowDefinitions="*,Auto" Margin="0,0,20,0">
 
                     <!-- Product Table -->
                     <Frame Grid.Row="0" Padding="10">
                         <Grid RowDefinitions="Auto,*" RowSpacing="10">
-                            <Grid Grid.Row="0" ColumnDefinitions="2*,4*,*,*,*" Padding="5">
+                            <Grid Grid.Row="0" ColumnDefinitions="*,4*,2*,*,*" Padding="5">
                                 <Label Text="Bar code" FontAttributes="Bold" Grid.Column="0"/>
                                 <Label Text="Item" FontAttributes="Bold" Grid.Column="1"/>
                                 <Label Text="Quantity" FontAttributes="Bold" Grid.Column="2"/>
@@ -41,12 +40,17 @@
                                             ItemsSource="{Binding AddedProducts}">
                                 <CollectionView.ItemTemplate>
                                     <DataTemplate>
-                                        <Grid ColumnDefinitions="2*,4*,*,*,*" Padding="5">
+                                        <Grid ColumnDefinitions="*,4*,2*,*,*" Padding="5">
                                             <Label Text="{Binding ItemBarCode}" Grid.Column="0"/>
-                                            <Label Text="{Binding ItemName}" Grid.Column="1"/>
-                                            <Label Text="{Binding Quantity}" Grid.Column="2"/>
-                                            <Label Text="{Binding Unit}" Grid.Column="3"/>
-                                            <Label Text="{Binding PLU}" Grid.Column="4"/>
+                                            <Label Text="{Binding Description}" Grid.Column="1"/>
+                                            <controls:NoBorderEntry Text="{Binding Quantity, Mode=TwoWay}"
+                                                                    Keyboard="Numeric"
+                                                                    Grid.Column="2"
+                                                                    HorizontalTextAlignment="Start"
+                                                                    Margin="0,0,100,0"/>
+                                            
+                                            <Label Text="{Binding UnitId}" Grid.Column="3"/>
+                                            <Label Text="{Binding PLUCode}" Grid.Column="4"/>
                                         </Grid>
                                     </DataTemplate>
                                 </CollectionView.ItemTemplate>
@@ -137,19 +141,21 @@
                                 SelectionChanged="OnProductSelected"
                                 HeightRequest="300">
                     <CollectionView.Header>
-                        <Grid Padding="10" ColumnDefinitions="2*,*,Auto">
+                        <Grid Padding="10" ColumnDefinitions="2*,*,*,Auto">
                             <Label Text="Item Name" FontAttributes="Bold"/>
-                            <Label Text="Barcode" FontAttributes="Bold" Grid.Column="1"/>
-                            <Label Text="Unit" FontAttributes="Bold" Grid.Column="2"/>
+                            <Label Text="Item Id" FontAttributes="Bold" Grid.Column="1"/>
+                            <Label Text="Barcode" FontAttributes="Bold" Grid.Column="2"/>
+                            <Label Text="Unit" FontAttributes="Bold" Grid.Column="3"/>
                         </Grid>
                     </CollectionView.Header>
 
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
-                            <Grid Padding="10" Margin="0,1" ColumnDefinitions="2*,*,Auto">
-                                <Label Text="{Binding ItemName}" />
-                                <Label Text="{Binding ItemBarCode}" Grid.Column="1" />
-                                <Label Text="{Binding Unit}" Grid.Column="2" />
+                            <Grid Padding="10" Margin="0,1" ColumnDefinitions="2*,*,*,Auto">
+                                <Label Text="{Binding Description}" />
+                                <Label Text="{Binding ItemId}" Grid.Column="1" />
+                                <Label Text="{Binding ItemBarCode}" Grid.Column="2" />
+                                <Label Text="{Binding UnitId}" Grid.Column="3" />
                             </Grid>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
