@@ -27,15 +27,16 @@ namespace D365POS.Models
                 if (_quantity != value)
                 {
                     _quantity = value;
-                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(Quantity));
                 }
             }
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
-        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        protected void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
+
     }
 }

@@ -15,6 +15,7 @@ namespace D365POS.Services
             // Create all tables
             _connection.CreateTableAsync<SalesTable>().Wait();
             _connection.CreateTableAsync<StoreProducts>().Wait();
+            _connection.CreateTableAsync<StoreProductsUnit>().Wait();
         }
 
         // ==========================
@@ -57,6 +58,31 @@ namespace D365POS.Services
         public async Task DeleteAllProducts()
         {
             await _connection.DeleteAllAsync<StoreProducts>();
+        }
+        // ==========================
+        // StoreProductsPrices Methods
+        // ==========================
+        // Get all products
+        public async Task<List<StoreProductsUnit>> GetAllProductsUnit()
+        {
+            return await _connection.Table<StoreProductsUnit>().ToListAsync();
+        }
+        // Insert single product
+        public async Task InsertProductUnit(StoreProductsUnit productUnit)
+        {
+            await _connection.InsertAsync(productUnit);
+        }
+
+        // Insert multiple products
+        public async Task InsertProductsUnit(List<StoreProductsUnit> productsUnit)
+        {
+            await _connection.InsertAllAsync(productsUnit);
+        }
+
+        // Delete all products (useful before syncing)
+        public async Task DeleteAllProductsUnit()
+        {
+            await _connection.DeleteAllAsync<StoreProductsUnit>();
         }
     }
 }

@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="D365POS.SalesPage"
              xmlns:controls="clr-namespace:D365POS.Controls"
+             xmlns:converters="clr-namespace:D365POS.Converters"
              Title="Sales">
 
    
@@ -14,7 +15,6 @@
                        Grid.Row="0"
                        Placeholder="Search by barcode, ID, or item name"
                        TextChanged="OnSearchTextChanged"
-                       SearchButtonPressed="OnSearchButtonPressed"
                        HeightRequest="45"
                        Margin="0,0,0,5"/>
 
@@ -50,7 +50,7 @@
                                                                     Margin="0,0,100,0"/>
                                             
                                             <Label Text="{Binding UnitId}" Grid.Column="3"/>
-                                            <Label Text="{Binding PLUCode}" Grid.Column="4"/>
+                                            <Label Text="{Binding ., Converter={StaticResource UnitPriceConverter}}" Grid.Column="4"/>
                                         </Grid>
                                     </DataTemplate>
                                 </CollectionView.ItemTemplate>
@@ -102,7 +102,7 @@
                         <Button Grid.Row="2" Grid.Column="1" Text="View reports" BackgroundColor="#A66E43" HeightRequest="60"/>
                         <Button Grid.Row="3" Grid.Column="0" Text="Suspend transaction" BackgroundColor="#A66E43" HeightRequest="60"/>
                         <Button Grid.Row="3" Grid.Column="1" Text="Void payment" BackgroundColor="#A66E43" HeightRequest="60"/>
-                        <Button Grid.Row="4" Grid.Column="0" Text="Price check" BackgroundColor="#A66E43" HeightRequest="60"/>
+                        <Button Grid.Row="4" Grid.Column="0" Text="Price check" BackgroundColor="#A66E43" HeightRequest="60" Clicked="OnPriceCheckClicked"/>
                         <Button Grid.Row="4" Grid.Column="1" Text="Recall transaction" BackgroundColor="#A66E43" HeightRequest="60"/>
                     </Grid>
 
@@ -112,7 +112,7 @@
                           RowDefinitions="Auto,Auto"
                           ColumnSpacing="10"
                           RowSpacing="10">
-                        <Button Grid.Row="0" Grid.Column="0" Text="Pay Cash" BackgroundColor="#A66E43" HeightRequest="60"/>
+                        <Button Grid.Row="0" Grid.Column="0" Text="Pay Cash" BackgroundColor="#A66E43" HeightRequest="60" Clicked="OnPayCashClicked"/>
                         <Button Grid.Row="0" Grid.Column="1" Text="Pay Card" BackgroundColor="#A66E43" HeightRequest="60"/>
                         <Button Grid.Row="1" Grid.Column="0" Text="Pay Quick Cash" BackgroundColor="#A66E43" HeightRequest="60"/>
                         <Button Grid.Row="1" Grid.Column="1" Text="Pay Customer Account" BackgroundColor="#A66E43" HeightRequest="60"/>
@@ -162,5 +162,20 @@
                 </CollectionView>
             </Frame>
         </Grid>
+        <!-- FULL SCREEN LOADER -->
+        <Grid x:Name="loaderOverlay"
+               IsVisible="False"
+               VerticalOptions="Fill"
+               HorizontalOptions="Fill"
+               Grid.ColumnSpan="2">
+            <ActivityIndicator x:Name="activityIndicator"
+                             Color="#A66E43"
+                             IsRunning="True"
+                             WidthRequest="60"
+                             HeightRequest="60"
+                             VerticalOptions="Center"
+                             HorizontalOptions="Center"/>
+        </Grid>
+        
     </Grid>
 </ContentPage>

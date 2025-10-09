@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="D365POS.PayCashPage"
+             Title="PayCashPage">
+    
+    <Grid Padding="30" ColumnDefinitions="*,*,2*" RowDefinitions="Auto, *" ColumnSpacing="40">
+        <!-- Amount Due -->
+        <VerticalStackLayout Grid.Column="0" Spacing="10">
+            <Label Text="Amount due"
+                   FontSize="18"
+                   FontAttributes="Bold"/>
+            <Label Text="1.00"
+                   FontSize="40"
+                   TextColor="#A66E43"
+                   FontAttributes="Bold"/>
+        </VerticalStackLayout>
+
+        <!-- Payment Amount with Keypad -->
+        <VerticalStackLayout Grid.Column="1" Spacing="10">
+            <Label Text="Payment amount"
+                   FontSize="18"
+                   FontAttributes="Bold"/>
+
+            <!-- Entry to show typed amount -->
+            <Entry x:Name="PaymentEntry"
+                   Text="0"
+                   FontSize="28"
+                   HorizontalTextAlignment="End"
+                   Keyboard="Numeric"
+                   BackgroundColor="White"
+                   TextColor="Black"
+                   Margin="0,0,0,10"
+                   HeightRequest="50"
+                   IsReadOnly="True"/>
+
+            <!-- Numeric Keypad -->
+            <Grid RowDefinitions="*,*,*,*,Auto"
+                  ColumnDefinitions="*,*,*,*"
+                  WidthRequest="250"
+                  HeightRequest="280">
+
+                <!-- Row 1 -->
+                <Button Text="7" Grid.Row="0" Grid.Column="0" Style="{StaticResource KeypadButtonStyle}" Clicked="OnKeypadButtonClicked"/>
+                <Button Text="8" Grid.Row="0" Grid.Column="1" Style="{StaticResource KeypadButtonStyle}" Clicked="OnKeypadButtonClicked"/>
+                <Button Text="9" Grid.Row="0" Grid.Column="2" Style="{StaticResource KeypadButtonStyle}" Clicked="OnKeypadButtonClicked"/>
+                <Button Text="⌫" Grid.Row="0" Grid.Column="3" Style="{StaticResource KeypadButtonStyle}" Clicked="OnBackspaceClicked"/>
+
+                <!-- Row 2 -->
+                <Button Text="4" Grid.Row="1" Grid.Column="0" Style="{StaticResource KeypadButtonStyle}" Clicked="OnKeypadButtonClicked"/>
+                <Button Text="5" Grid.Row="1" Grid.Column="1" Style="{StaticResource KeypadButtonStyle}" Clicked="OnKeypadButtonClicked"/>
+                <Button Text="6" Grid.Row="1" Grid.Column="2" Style="{StaticResource KeypadButtonStyle}" Clicked="OnKeypadButtonClicked"/>
+                <Button Text="+" Grid.Row="1" Grid.Column="3" Style="{StaticResource KeypadButtonStyle}" Clicked="OnKeypadButtonClicked"/>
+
+                <!-- Row 3 -->
+                <Button Text="1" Grid.Row="2" Grid.Column="0" Style="{StaticResource KeypadButtonStyle}" Clicked="OnKeypadButtonClicked"/>
+                <Button Text="2" Grid.Row="2" Grid.Column="1" Style="{StaticResource KeypadButtonStyle}" Clicked="OnKeypadButtonClicked"/>
+                <Button Text="3" Grid.Row="2" Grid.Column="2" Style="{StaticResource KeypadButtonStyle}" Clicked="OnKeypadButtonClicked"/>
+                <Button Text="-" Grid.Row="2" Grid.Column="3" Style="{StaticResource KeypadButtonStyle}" Clicked="OnKeypadButtonClicked"/>
+
+                <!-- Row 4 -->
+                <Button Text="00" Grid.Row="3" Grid.Column="0" Style="{StaticResource KeypadButtonStyle}" Clicked="OnKeypadButtonClicked"/>
+                <Button Text="0" Grid.Row="3" Grid.Column="1" Style="{StaticResource KeypadButtonStyle}" Clicked="OnKeypadButtonClicked"/>
+                <Button Text="." Grid.Row="3" Grid.Column="2" Style="{StaticResource KeypadButtonStyle}" Clicked="OnKeypadButtonClicked"/>
+                <Button Text="↵" Grid.Row="3" Grid.Column="3"
+                        BackgroundColor="#A66E43"
+                        FontSize="24"
+                        FontAttributes="Bold"
+                        Clicked="OnEnterClicked"/>
+            </Grid>
+        </VerticalStackLayout>
+
+        <!-- Denominations -->
+        <VerticalStackLayout Grid.Column="2" Spacing="10">
+            <Label Text="Denominations"
+                   FontSize="18"
+                   FontAttributes="Bold"/>
+
+            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="10">
+                <Button Text="1,000.00" Grid.Row="0" Grid.Column="0" Style="{StaticResource DenominationButtonStyle}"/>
+                <Button Text="20.00" Grid.Row="0" Grid.Column="1" Style="{StaticResource DenominationButtonStyle}"/>
+
+                <Button Text="500.00" Grid.Row="1" Grid.Column="0" Style="{StaticResource DenominationButtonStyle}"/>
+                <Button Text="10.00" Grid.Row="1" Grid.Column="1" Style="{StaticResource DenominationButtonStyle}"/>
+
+                <Button Text="200.00" Grid.Row="2" Grid.Column="0" Style="{StaticResource DenominationButtonStyle}"/>
+                <Button Text="5.00" Grid.Row="2" Grid.Column="1" Style="{StaticResource DenominationButtonStyle}"/>
+
+                <Button Text="100.00" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Style="{StaticResource DenominationButtonStyle}"/>
+                <Button Text="50.00" Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Style="{StaticResource DenominationButtonStyle}"/>
+            </Grid>
+        </VerticalStackLayout>
+    </Grid>
+
+    <!-- Styles -->
+    <ContentPage.Resources>
+        <Style x:Key="KeypadButtonStyle" TargetType="Button">
+            <Setter Property="FontSize" Value="22"/>
+            <Setter Property="FontAttributes" Value="Bold"/>
+            <Setter Property="BackgroundColor"/>
+            <Setter Property="TextColor"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Margin" Value="3"/>
+        </Style>
+
+        <Style x:Key="DenominationButtonStyle" TargetType="Button">
+            <Setter Property="FontSize" Value="20"/>
+            <Setter Property="BackgroundColor" Value="#A66E43"/>
+            <Setter Property="TextColor"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="HeightRequest" Value="60"/>
+        </Style>
+    </ContentPage.Resources>
+</ContentPage>
