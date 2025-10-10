@@ -1,5 +1,4 @@
 ﻿using D365POS.Models;
-using D365POS.Services;
 
 namespace D365POS.Services
 {

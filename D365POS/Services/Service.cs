@@ -2,7 +2,7 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
 
-namespace SISWindowsApp.Services
+namespace D365POS.Services
 {
     public class AuthService
     {

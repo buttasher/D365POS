@@ -1,46 +1,48 @@
-﻿
-
-using System.Text;
+﻿using System.Text;
 using System.Text.Json;
-using SISWindowsApp.Services;
 
-public class GetStoreService
+namespace D365POS.Services
 {
-    private readonly AuthService _authService = new AuthService();
-    private readonly HttpClient _client = new HttpClient();
-    public async Task<StoreResponse?> GetStoreAsync(string userId, string company)
+    public class GetStoreService
     {
-        // Step 1: Get access token
-        var token = await _authService.GetAccessTokenAsync();
-
-        // Step 2: Build request
-        var url = "https://tbd365deve8cbf0eb94119fe1devaos.cloudax.uae.dynamics.com/api/services/TBGetWarehouseGroup/TBGetWarehouseService/getStore";
-        var payload = new
+        private readonly AuthService _authService = new AuthService();
+        private readonly HttpClient _client = new HttpClient();
+        public async Task<StoreResponse?> GetStoreAsync(string userId, string company)
         {
-            _userId = userId,
-            _company = company
-        };
+            // Step 1: Get access token
+            var token = await _authService.GetAccessTokenAsync();
 
-        var json = JsonSerializer.Serialize(payload);
-        var request = new HttpRequestMessage(HttpMethod.Post, url);
-        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-        request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+            // Step 2: Build request
+            var url = "https://tbd365deve8cbf0eb94119fe1devaos.cloudax.uae.dynamics.com/api/services/TBGetWarehouseGroup/TBGetWarehouseService/getStore";
+            var payload = new
+            {
+                _userId = userId,
+                _company = company
+            };
 
-        // Step 3: Send request
-        var response = await _client.SendAsync(request);
-        response.EnsureSuccessStatusCode();
+            var json = JsonSerializer.Serialize(payload);
+            var request = new HttpRequestMessage(HttpMethod.Post, url);
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            request.Content = new StringContent(json, Encoding.UTF8, "application/json");
 
-        var responseJson = await response.Content.ReadAsStringAsync();
+            // Step 3: Send request
+            var response = await _client.SendAsync(request);
+            response.EnsureSuccessStatusCode();
 
-        // Step 4: Deserialize
-        var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-        return JsonSerializer.Deserialize<StoreResponse>(responseJson, options);
+            var responseJson = await response.Content.ReadAsStringAsync();
+
+            // Step 4: Deserialize
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            return JsonSerializer.Deserialize<StoreResponse>(responseJson, options);
+        }
+        public class StoreResponse
+        {
+            public string? Status { get; set; }
+            public string? Message { get; set; }
+            public List<string>? Warehouse { get; set; }
+        }
+
     }
-    public class StoreResponse
-    {
-        public string? Status { get; set; }
-        public string? Message { get; set; }
-        public List<string>? Warehouse { get; set; }
-    }
-
 }
+
+

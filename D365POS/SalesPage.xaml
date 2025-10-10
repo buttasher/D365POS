@@ -2,7 +2,6 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="D365POS.SalesPage"
              xmlns:controls="clr-namespace:D365POS.Controls"
-             xmlns:converters="clr-namespace:D365POS.Converters"
              Title="Sales">
 
    
@@ -50,7 +49,7 @@
                                                                     Margin="0,0,100,0"/>
                                             
                                             <Label Text="{Binding UnitId}" Grid.Column="3"/>
-                                            <Label Text="{Binding ., Converter={StaticResource UnitPriceConverter}}" Grid.Column="4"/>
+                                            <Label Text="{Binding Total, StringFormat='{0:N4}'}" Grid.Column="4"/>
                                         </Grid>
                                     </DataTemplate>
                                 </CollectionView.ItemTemplate>
@@ -68,19 +67,22 @@
                                     HorizontalOptions="Start"/>
                             <Grid ColumnDefinitions="*,*,*,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="8">
                                 <Label Text="Lines" Grid.Row="0" Grid.Column="0"/>
-                                <Label Text="0" Grid.Row="0" Grid.Column="1"/>
+                                <Label Text="{Binding LinesCount}" Grid.Row="0" Grid.Column="1"/>
+                                
                                 <Label Text="Subtotal" Grid.Row="0" Grid.Column="2" HorizontalOptions="End"/>
-                                <Label Text="0.00" Grid.Row="0" Grid.Column="3" HorizontalOptions="End"/>
+                                <Label Text="0.0000" Grid.Row="0" Grid.Column="3" HorizontalOptions="End"/>
+                                
                                 <Label Text="Discounts" Grid.Row="1" Grid.Column="0"/>
-                                <Label Text="0.00" Grid.Row="1" Grid.Column="1"/>
+                                <Label Text="0.0000" Grid.Row="1" Grid.Column="1"/>
+                                
                                 <Label Text="Payments" Grid.Row="1" Grid.Column="2" HorizontalOptions="End"/>
-                                <Label Text="0.00" Grid.Row="1" Grid.Column="3" HorizontalOptions="End"/>
+                                <Label x:Name="PaymentLabel" Text="0.0000" Grid.Row="1" Grid.Column="3" HorizontalOptions="End"/>
+                                
                                 <Label Text="Tax" Grid.Row="2" Grid.Column="0"/>
-                                <Label Text="0.00" Grid.Row="2" Grid.Column="1"/>
-                                <Label Text="Amount due" TextColor="#A66E43" FontAttributes="Bold"
-                                       Grid.Row="2" Grid.Column="2" HorizontalOptions="End"/>
-                                <Label Text="0.00" TextColor="#A66E43" FontAttributes="Bold"
-                                       Grid.Row="2" Grid.Column="3" HorizontalOptions="End"/>
+                                <Label Text="0.0000" Grid.Row="2" Grid.Column="1"/>
+                                
+                                <Label Text="Amount due" TextColor="#A66E43" FontAttributes="Bold" Grid.Row="2" Grid.Column="2" HorizontalOptions="End"/>
+                                <Label x:Name="AmountDueLabel" Text="0.0000" TextColor="#A66E43" FontAttributes="Bold" Grid.Row="2" Grid.Column="3" HorizontalOptions="End"/>
                             </Grid>
                         </StackLayout>
                     </Frame>
@@ -114,7 +116,7 @@
                           RowSpacing="10">
                         <Button Grid.Row="0" Grid.Column="0" Text="Pay Cash" BackgroundColor="#A66E43" HeightRequest="60" Clicked="OnPayCashClicked"/>
                         <Button Grid.Row="0" Grid.Column="1" Text="Pay Card" BackgroundColor="#A66E43" HeightRequest="60"/>
-                        <Button Grid.Row="1" Grid.Column="0" Text="Pay Quick Cash" BackgroundColor="#A66E43" HeightRequest="60"/>
+                        <Button Grid.Row="1" Grid.Column="0" Text="Pay Quick Cash" BackgroundColor="#A66E43" HeightRequest="60" Clicked="OnPayQuickCashClicked"/>
                         <Button Grid.Row="1" Grid.Column="1" Text="Pay Customer Account" BackgroundColor="#A66E43" HeightRequest="60"/>
                     </Grid>
                 </Grid>

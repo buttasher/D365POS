@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<toolkit:Popup xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+               xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+               xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+               x:Class="D365POS.Popups.ConfirmationPopup"
+               Color="Transparent">
+    <!-- semi-transparent overlay -->
+
+    <Frame CornerRadius="25"
+           HasShadow="True"
+           Padding="25"
+           VerticalOptions="Center"
+           HorizontalOptions="Center">
+
+        <VerticalStackLayout Spacing="15"
+                             VerticalOptions="Center"
+                             HorizontalOptions="Center">
+
+           
+            <!-- Success Section -->
+            <Label Text="Payment Confirmation!"
+                   FontAttributes="Bold"
+                   FontSize="18"
+                   TextColor="#A66E43"
+                   HorizontalOptions="Center"/>
+
+            <Label x:Name="PaymentLabel"
+                   Text="Payment: 0.0000"
+                   FontSize="16"
+                   HorizontalOptions="Center"/>
+
+            <Label x:Name="RemainingLabel"
+                   Text="Remaining: 0.0000"
+                   FontSize="16"
+                   HorizontalOptions="Center"/>
+
+            <Button x:Name="OK"
+                    Text="Confirm"
+                    BackgroundColor="#A66E43"
+                    FontAttributes="Bold"
+                    CornerRadius="20"
+                    WidthRequest="120"
+                    Clicked="OnOkClicked"/>
+
+            <!-- Loader Overlay -->
+            <Grid x:Name="loaderOverlay"
+                  IsVisible="False"
+                  VerticalOptions="Fill"
+                  HorizontalOptions="Fill">
+
+                <ActivityIndicator x:Name="activityIndicator"
+                                   Color="#A66E43"
+                                   IsRunning="True"
+                                   WidthRequest="60"
+                                   HeightRequest="60"
+                                   VerticalOptions="Center"
+                                   HorizontalOptions="Center"/>
+            </Grid>
+        </VerticalStackLayout>
+    </Frame>
+</toolkit:Popup>

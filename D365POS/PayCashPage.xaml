@@ -10,7 +10,8 @@
             <Label Text="Amount due"
                    FontSize="18"
                    FontAttributes="Bold"/>
-            <Label Text="1.00"
+            <Label x:Name="AmountDueLabel"
+                   Text="0.00"
                    FontSize="40"
                    TextColor="#A66E43"
                    FontAttributes="Bold"/>
@@ -77,17 +78,17 @@
                    FontAttributes="Bold"/>
 
             <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="10">
-                <Button Text="1,000.00" Grid.Row="0" Grid.Column="0" Style="{StaticResource DenominationButtonStyle}"/>
-                <Button Text="20.00" Grid.Row="0" Grid.Column="1" Style="{StaticResource DenominationButtonStyle}"/>
+                <Button Text="1,000.00" Grid.Row="0" Grid.Column="0" Style="{StaticResource DenominationButtonStyle}" Clicked="OnDenominationClicked"/>
+                <Button Text="20.00" Grid.Row="0" Grid.Column="1" Style="{StaticResource DenominationButtonStyle}" Clicked="OnDenominationClicked"/>
 
-                <Button Text="500.00" Grid.Row="1" Grid.Column="0" Style="{StaticResource DenominationButtonStyle}"/>
-                <Button Text="10.00" Grid.Row="1" Grid.Column="1" Style="{StaticResource DenominationButtonStyle}"/>
+                <Button Text="500.00" Grid.Row="1" Grid.Column="0" Style="{StaticResource DenominationButtonStyle}" Clicked="OnDenominationClicked"/>
+                <Button Text="10.00" Grid.Row="1" Grid.Column="1" Style="{StaticResource DenominationButtonStyle}" Clicked="OnDenominationClicked"/>
 
-                <Button Text="200.00" Grid.Row="2" Grid.Column="0" Style="{StaticResource DenominationButtonStyle}"/>
-                <Button Text="5.00" Grid.Row="2" Grid.Column="1" Style="{StaticResource DenominationButtonStyle}"/>
+                <Button Text="200.00" Grid.Row="2" Grid.Column="0" Style="{StaticResource DenominationButtonStyle}" Clicked="OnDenominationClicked"/>
+                <Button Text="5.00" Grid.Row="2" Grid.Column="1" Style="{StaticResource DenominationButtonStyle}" Clicked="OnDenominationClicked"/>
 
-                <Button Text="100.00" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Style="{StaticResource DenominationButtonStyle}"/>
-                <Button Text="50.00" Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Style="{StaticResource DenominationButtonStyle}"/>
+                <Button Text="100.00" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Style="{StaticResource DenominationButtonStyle}" Clicked="OnDenominationClicked"/>
+                <Button Text="50.00" Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Style="{StaticResource DenominationButtonStyle}" Clicked="OnDenominationClicked"/>
             </Grid>
         </VerticalStackLayout>
     </Grid>

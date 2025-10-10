@@ -19,6 +19,8 @@ namespace D365POS.Models
         public string SalesTaxGroup { get; set; }
 
         private decimal _quantity;
+        
+       
         public decimal Quantity
         {
             get => _quantity;
@@ -28,9 +30,29 @@ namespace D365POS.Models
                 {
                     _quantity = value;
                     OnPropertyChanged(nameof(Quantity));
+                    OnPropertyChanged(nameof(Total));
                 }
             }
         }
+        
+        private decimal _unitPrice;
+        [Ignore]
+        public decimal UnitPrice
+        {
+            get => _unitPrice;
+            set
+            {
+                if (_unitPrice != value)
+                {
+                    _unitPrice = value;
+                    OnPropertyChanged(nameof(UnitPrice));
+                    OnPropertyChanged(nameof(Total));
+                }
+            }
+        }
+        [Ignore]
+        // FRONT-END ONLY: Total
+        public decimal Total => Quantity * UnitPrice;
 
         public event PropertyChangedEventHandler PropertyChanged;
         protected void OnPropertyChanged(string propertyName)
