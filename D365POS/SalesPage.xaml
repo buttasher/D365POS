@@ -4,12 +4,12 @@
              xmlns:controls="clr-namespace:D365POS.Controls"
              Title="Sales">
 
-   
+
     <Grid x:Name="MainContainer">
-       
+
         <Grid x:Name="SalesContent" RowDefinitions="Auto,Auto,*" Padding="10">
 
-           
+
             <SearchBar x:Name="ProductSearchBar"
                        Grid.Row="0"
                        Placeholder="Search by barcode, ID, or item name"
@@ -17,9 +17,9 @@
                        HeightRequest="45"
                        Margin="0,0,0,5"/>
 
-            
+
             <Grid Grid.Row="2" ColumnDefinitions="5*,3*" Padding="0">
-               
+
                 <!-- LEFT SIDE -->
                 <Grid Grid.Column="0" RowDefinitions="*,Auto" Margin="0,0,20,0">
 
@@ -42,12 +42,7 @@
                                         <Grid ColumnDefinitions="*,4*,2*,*,*" Padding="5">
                                             <Label Text="{Binding ItemBarCode}" Grid.Column="0"/>
                                             <Label Text="{Binding Description}" Grid.Column="1"/>
-                                            <controls:NoBorderEntry Text="{Binding Quantity, Mode=TwoWay}"
-                                                                    Keyboard="Numeric"
-                                                                    Grid.Column="2"
-                                                                    HorizontalTextAlignment="Start"
-                                                                    Margin="0,0,100,0"/>
-                                            
+                                            <Label Text="{Binding Quantity}" Grid.Column="2" HorizontalTextAlignment="Start"/>
                                             <Label Text="{Binding UnitId}" Grid.Column="3"/>
                                             <Label Text="{Binding Total, StringFormat='{0:N4}'}" Grid.Column="4"/>
                                         </Grid>
@@ -68,19 +63,19 @@
                             <Grid ColumnDefinitions="*,*,*,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="8">
                                 <Label Text="Lines" Grid.Row="0" Grid.Column="0"/>
                                 <Label Text="{Binding LinesCount}" Grid.Row="0" Grid.Column="1"/>
-                                
+
                                 <Label Text="Subtotal" Grid.Row="0" Grid.Column="2" HorizontalOptions="End"/>
-                                <Label Text="0.0000" Grid.Row="0" Grid.Column="3" HorizontalOptions="End"/>
-                                
+                                <Label Text="{Binding TotalSubtotal, StringFormat='{0:F4}'}" Grid.Row="0" Grid.Column="3" HorizontalOptions="End"/>
+
                                 <Label Text="Discounts" Grid.Row="1" Grid.Column="0"/>
                                 <Label Text="0.0000" Grid.Row="1" Grid.Column="1"/>
-                                
+
                                 <Label Text="Payments" Grid.Row="1" Grid.Column="2" HorizontalOptions="End"/>
                                 <Label x:Name="PaymentLabel" Text="0.0000" Grid.Row="1" Grid.Column="3" HorizontalOptions="End"/>
-                                
+
                                 <Label Text="Tax" Grid.Row="2" Grid.Column="0"/>
-                                <Label Text="0.0000" Grid.Row="2" Grid.Column="1"/>
-                                
+                                <Label Text="{Binding TotalTax, StringFormat='{0:N4}'}" Grid.Row="2" Grid.Column="1"/>
+
                                 <Label Text="Amount due" TextColor="#A66E43" FontAttributes="Bold" Grid.Row="2" Grid.Column="2" HorizontalOptions="End"/>
                                 <Label x:Name="AmountDueLabel" Text="0.0000" TextColor="#A66E43" FontAttributes="Bold" Grid.Row="2" Grid.Column="3" HorizontalOptions="End"/>
                             </Grid>
@@ -115,7 +110,7 @@
                           ColumnSpacing="10"
                           RowSpacing="10">
                         <Button Grid.Row="0" Grid.Column="0" Text="Pay Cash" BackgroundColor="#A66E43" HeightRequest="60" Clicked="OnPayCashClicked"/>
-                        <Button Grid.Row="0" Grid.Column="1" Text="Pay Card" BackgroundColor="#A66E43" HeightRequest="60"/>
+                        <Button Grid.Row="0" Grid.Column="1" Text="Pay Card" BackgroundColor="#A66E43" HeightRequest="60" Clicked="OnPayCardClicked"/>
                         <Button Grid.Row="1" Grid.Column="0" Text="Pay Quick Cash" BackgroundColor="#A66E43" HeightRequest="60" Clicked="OnPayQuickCashClicked"/>
                         <Button Grid.Row="1" Grid.Column="1" Text="Pay Customer Account" BackgroundColor="#A66E43" HeightRequest="60"/>
                     </Grid>
@@ -178,6 +173,6 @@
                              VerticalOptions="Center"
                              HorizontalOptions="Center"/>
         </Grid>
-        
+
     </Grid>
 </ContentPage>

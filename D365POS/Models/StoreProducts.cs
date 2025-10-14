@@ -17,10 +17,14 @@ namespace D365POS.Models
         public string PLUCode { get; set; }
         public string ItemBarCode { get; set; }
         public string SalesTaxGroup { get; set; }
+        public string ItemSalesTaxGroup { get; set; }
+        public decimal TaxFactor {get; set; }
+
+        [Ignore]
+        public decimal PriceIncludeTax { get; set; }
 
         private decimal _quantity;
-        
-       
+        [Ignore]
         public decimal Quantity
         {
             get => _quantity;
@@ -34,8 +38,9 @@ namespace D365POS.Models
                 }
             }
         }
-        
+
         private decimal _unitPrice;
+
         [Ignore]
         public decimal UnitPrice
         {
@@ -53,6 +58,43 @@ namespace D365POS.Models
         [Ignore]
         // FRONT-END ONLY: Total
         public decimal Total => Quantity * UnitPrice;
+
+        [Ignore]
+        public decimal TaxAmount
+        {
+            get
+            {
+                if (TaxFactor <= 0)
+                    return 0;
+
+                if (PriceIncludeTax > 0)
+                {
+                    // Extract tax (price includes tax)
+                    return Math.Round(Total - (Total / (1 + TaxFactor)), 4);
+                }
+                else
+                {
+                    // Add tax (price excludes tax)
+                    return Math.Round(Total * TaxFactor, 4);
+                }
+            }
+        }
+
+        [Ignore]
+        public decimal Subtotal
+        {
+            get
+            {
+                if (PriceIncludeTax > 0)
+                {
+                    return Math.Round(Total / (1 + TaxFactor), 4);
+                }
+                else
+                {
+                    return Total;
+                }
+            }
+        }
 
         public event PropertyChangedEventHandler PropertyChanged;
         protected void OnPropertyChanged(string propertyName)

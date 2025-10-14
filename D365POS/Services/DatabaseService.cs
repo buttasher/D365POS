@@ -1,5 +1,6 @@
-﻿using SQLite;
-using D365POS.Models;
+﻿using D365POS.Models;
+using SQLite;
+using System.Linq.Expressions;
 
 namespace D365POS.Services
 {
@@ -13,24 +14,56 @@ namespace D365POS.Services
             _connection = new SQLiteAsyncConnection(Path.Combine(FileSystem.AppDataDirectory, DB_Name));
 
             // Create all tables
-            _connection.CreateTableAsync<SalesTable>().Wait();
             _connection.CreateTableAsync<StoreProducts>().Wait();
             _connection.CreateTableAsync<StoreProductsUnit>().Wait();
+            _connection.CreateTableAsync<POSRetailTransactionTable>().Wait();
+            _connection.CreateTableAsync<POSRetailTransactionSalesTrans>().Wait();
+            _connection.CreateTableAsync<POSRetailTransactionPaymentTrans>().Wait();
+            _connection.CreateTableAsync<POSRetailTransactionTaxTrans>().Wait();
+
         }
 
         // ==========================
-        // SalesTable Methods
+        // TransactionTable Methods
         // ==========================
-        public async Task<SalesTable> GetById(int id)
+        public async Task CreateTransactionTable(POSRetailTransactionTable transactionTable)
         {
-            return await _connection.Table<SalesTable>()
-                                    .Where(i => i.SalesId == id)
-                                    .FirstOrDefaultAsync();
+            await _connection.InsertAsync(transactionTable);
+        }
+        public async Task<List<POSRetailTransactionTable>> GetAllTransactions()
+        {
+            return await _connection.Table<POSRetailTransactionTable>().ToListAsync();
+        }
+        // ==========================
+        // SalesTrans Methods
+        // ==========================
+        public async Task CreateTransactionSalesTrans(POSRetailTransactionSalesTrans SalesTrans)
+        {
+            await _connection.InsertAsync(SalesTrans);
+        }
+        public async Task<List<T>> GetAllSalesTransAsync<T>() where T : new()
+        {
+            return await _connection.Table<T>().ToListAsync();
         }
 
-        public async Task Create(SalesTable salesTable)
+        // Get filtered rows based on condition
+        public async Task<List<T>> GetListAsync<T>(Expression<Func<T, bool>> predicate) where T : new()
         {
-            await _connection.InsertAsync(salesTable);
+            return await _connection.Table<T>().Where(predicate).ToListAsync();
+        }
+        // ==========================
+        // PaymentTrans Methods
+        // ==========================
+        public async Task CreateTransactionPaymentTrans(POSRetailTransactionPaymentTrans PaymentTrans)
+        {
+            await _connection.InsertAsync(PaymentTrans);
+        }
+        // ==========================
+        // TaxTrans Methods
+        // ==========================
+        public async Task CreateTransactionTaxTrans(POSRetailTransactionTaxTrans TaxTrans)
+        {
+            await _connection.InsertAsync(TaxTrans);
         }
 
         // ==========================

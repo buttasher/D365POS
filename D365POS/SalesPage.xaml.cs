@@ -4,7 +4,6 @@ using D365POS.Popups;
 using D365POS.Services;
 using System.Collections.ObjectModel;
 using System.Data;
-using static SQLite.SQLite3;
 
 
 
@@ -16,7 +15,6 @@ namespace D365POS
     {
         private readonly DatabaseService _db;
         private List<StoreProducts> _allProducts;
-        private readonly DatabaseService _dbService = new DatabaseService();
         private List<StoreProductsUnit> _allUnits = new();
         private readonly RecordSalesService _recordSalesService = new RecordSalesService();
         public int LinesCount => AddedProducts?.Count ?? 0;
@@ -41,7 +39,7 @@ namespace D365POS
             {
                 _paymentAmount = value;
                 PaymentLabel.Text = value.ToString("N4");
-               
+
             }
         }
         private decimal _newAmountDue;
@@ -59,12 +57,38 @@ namespace D365POS
                     if (confirmed)
                     {
                         // Call your API after user confirms
-                        OnPayQuickCashClicked(null, null);
+                        await RecordSaleAsync("Cash");
                     }
                 });
             }
         }
 
+        private decimal _totalTax;
+        public decimal TotalTax
+        {
+            get => _totalTax;
+            set
+            {
+                if (_totalTax != value)
+                {
+                    _totalTax = value;
+                    OnPropertyChanged(nameof(TotalTax));
+                }
+            }
+        }
+        private decimal _totalSubtotal;
+        public decimal TotalSubtotal
+        {
+            get => _totalSubtotal;
+            set
+            {
+                if (_totalSubtotal != value)
+                {
+                    _totalSubtotal = value;
+                    OnPropertyChanged(nameof(TotalSubtotal));
+                }
+            }
+        }
 
         public SalesPage(DatabaseService db)
         {
@@ -76,6 +100,7 @@ namespace D365POS
             AddedProducts.CollectionChanged += (s, e) =>
             {
                 OnPropertyChanged(nameof(LinesCount));
+                RecalculateTotals();
             };
 
         }
@@ -85,9 +110,13 @@ namespace D365POS
             base.OnAppearing();
 
             _allProducts = await _db.GetAllProducts();
-            _allUnits = await _dbService.GetAllProductsUnit();
+            _allUnits = await _db.GetAllProductsUnit();
         }
-
+        private void RecalculateTotals()
+        {
+            TotalTax = AddedProducts.Sum(p => p.TaxAmount);
+            TotalSubtotal = AddedProducts.Sum(p => p.Subtotal);
+        }
         private void OnSearchTextChanged(object sender, TextChangedEventArgs e)
         {
             ApplyFilter(e.NewTextValue);
@@ -144,6 +173,7 @@ namespace D365POS
                 product.UnitPrice = unitPrice; // set unit price for new product
                 AddedProducts.Add(product);
             }
+            RecalculateTotals();
         }
         private async void OnPayCashClicked(object sender, EventArgs e)
         {
@@ -179,6 +209,15 @@ namespace D365POS
         }
         private async void OnPayQuickCashClicked(object sender, EventArgs e)
         {
+            await RecordSaleAsync("Cash");
+        }
+
+        private async void OnPayCardClicked(object sender, EventArgs e)
+        {
+            await RecordSaleAsync("Card");
+        }
+        private async Task RecordSaleAsync(string paymentMethod)
+        {
             if (AddedProducts == null || !AddedProducts.Any())
             {
                 await DisplayAlert("No items", "Please add at least one product to record a sale.", "OK");
@@ -191,9 +230,10 @@ namespace D365POS
             {
                 var storeId = Preferences.Get("Store", string.Empty);
                 var company = Preferences.Get("Company", string.Empty);
-                var cashier = Preferences.Get("UserId", string.Empty); 
-                var total   = AddedProducts.Sum(p => p.Total);
-                var taxValue = total * 0.05m;
+                var cashier = Preferences.Get("UserId", string.Empty);
+                var total = AddedProducts.Sum(p => p.Total);
+                var totalTax = AddedProducts.Sum(p => p.TaxAmount);
+
 
                 var saleItem = new RecordSalesService.SaleItemDto
                 {
@@ -208,7 +248,7 @@ namespace D365POS
                         new RecordSalesService.PaymentDto
                         {
                             PaymentDateTime = DateTime.Now,
-                            PaymentMethod = "Cash",
+                            PaymentMethod = paymentMethod,
                             PaymentType = "",
                             Currency = "AED",
                             PaymentAmount = total.ToString("F2")
@@ -219,8 +259,8 @@ namespace D365POS
                         new RecordSalesService.TaxDto
                         {
                             TaxName = "VAT",
-                            TaxRate = "0.05",
-                            TaxValue = taxValue.ToString("F2")
+                            TaxRate = (double)(AddedProducts.FirstOrDefault()?.TaxFactor ?? 0.05m),
+                            TaxValue = totalTax.ToString("F2")
                         }
                     },
                     Items = AddedProducts.Select(p => new RecordSalesService.ItemDto
@@ -230,29 +270,97 @@ namespace D365POS
                         UnitPrice = p.UnitPrice,
                         Qty = (int)p.Quantity,
                         LineAmount = (int)p.Total,
-                        TaxAmount = p.Total * 0.05m,
+                        TaxAmount = p.TaxAmount,
                         Action = 2,
                         ActionDateTime = DateTime.Now
                     }).ToList()
-                };
-
-                var saleRequest = new RecordSalesService.RecordSalesRequest
-                {
-                    company = company,
-                    saleItems = new List<RecordSalesService.SaleItemDto> { saleItem }
                 };
 
                 var success = await _recordSalesService.RecordSalesAsync(
                     company,
                     new List<RecordSalesService.SaleItemDto> { saleItem },
                     CancellationToken.None
-                  );
-
+                );
 
                 if (success)
                 {
-                    await DisplayAlert("Success", "Sale recorded successfully!", "OK");
+                    var header = new POSRetailTransactionTable
+                    {
+                        StoreId = storeId,
+                        TerminalId = saleItem.TerminalId,
+                        ShiftId = saleItem.ShiftId,
+                        ShiftStaffId = cashier,
+                        ReceiptId = saleItem.ReceiptId,
+                        BusinessDate = DateTime.Now,
+                        Currency = saleItem.Payments.FirstOrDefault()?.Currency ?? "AED",
+                        Total = total
+                    };
+                    await _db.CreateTransactionTable(header);
+
+                    foreach (var p in AddedProducts)
+                    {
+                        decimal netAmount, grossAmount, taxAmount;
+
+                       
+                        if (p.PriceIncludeTax > 0)
+                        {
+                           
+                            taxAmount = Math.Round(p.Total - (p.Total / (1 + p.TaxFactor)), 4);
+                            netAmount = Math.Round(p.Total / (1 + p.TaxFactor), 4);
+                            grossAmount = p.Total;
+                        }
+                        else
+                        {
+                            // add tax
+                            taxAmount = Math.Round(p.Total * p.TaxFactor, 4);
+                            netAmount = p.Total;
+                            grossAmount = p.Total + taxAmount;
+                        }
+
+                        var line = new POSRetailTransactionSalesTrans
+                        {
+                            TransactionId = header.TransactionId,
+                            LineNum = LinesCount,
+                            ItemId = p.ItemId,
+                            Qty = p.Quantity,
+                            UnitId = p.UnitId,
+                            UnitPrice = p.UnitPrice,
+                            NetAmount = netAmount,
+                            TaxAmount = taxAmount,
+                            GrossAmount = grossAmount,
+                            DiscAmount = 0,
+                            DiscAmountWithoutTax = 0
+                        };
+                        await _db.CreateTransactionSalesTrans(line);
+                    }
+
+                    var payment = new POSRetailTransactionPaymentTrans
+                    {
+                        TransactionId = header.TransactionId,
+                        PaymentDateTime = DateTime.Now,
+                        PaymentMethod = paymentMethod,
+                        PaymentType = "",
+                        Currency = saleItem.Payments.FirstOrDefault()?.Currency ?? "AED",
+                        PaymentAmount = AddedProducts.Sum(p => p.Total)
+                    };
+                    await _db.CreateTransactionPaymentTrans(payment);
+
+                    var tax = new POSRetailTransactionTaxTrans
+                    {
+                        TransactionId = header.TransactionId,
+                        TaxName = saleItem.Taxes.FirstOrDefault()?.TaxName ?? "VAT",
+                        TaxRate = saleItem.Taxes.FirstOrDefault()?.TaxRate ?? 0.05,
+                        TaxAmount = totalTax
+                    };
+                    await _db.CreateTransactionTaxTrans(tax);
+
+
+                    await DisplayAlert("Success", $"Sale recorded successfully via {paymentMethod}!", "OK");
                     AddedProducts.Clear();
+                    ProductsList.ItemsSource = null;
+                    ProductsList.ItemsSource = AddedProducts;
+                    PaymentLabel.Text = "0.0000";
+                    AmountDueLabel.Text = "0.0000";
                 }
                 else
                 {
@@ -268,6 +376,7 @@ namespace D365POS
                 loaderOverlay.IsVisible = false;
             }
         }
+
         private async Task<bool> ShowConfirmationPopup(decimal paymentAmount, decimal newAmountDue)
         {
             try

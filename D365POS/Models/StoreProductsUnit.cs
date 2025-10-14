@@ -11,6 +11,7 @@ namespace D365POS.Models
         public string ItemId { get; set; }
         public string UnitId { get; set; }
         public decimal UnitPrice { get; set; }
+        public decimal PriceIncludeTax { get; set; }
         public string storeId { get; set; }
     }
 }

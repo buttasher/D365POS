@@ -24,6 +24,7 @@ namespace D365POS.Services
                 ItemId = p.ItemId,
                 UnitId = p.UnitId,
                 UnitPrice = p.UnitPrice,
+                PriceIncludeTax = p.PriceIncludeTax,
             }).ToList();
 
             // 4. Save to local SQLite

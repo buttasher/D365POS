@@ -32,6 +32,7 @@ namespace D365POS
             var userService = new UserService();
             var storeService = new GetStoreService();
             var productSyncService = new ProductSyncService();
+            var productPriceService = new ProductPriceSyncService();
 
             var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
 
@@ -52,6 +53,7 @@ namespace D365POS
 
                         
                         await productSyncService.SyncProductsAsync(result.CompanyList?.FirstOrDefault(), store);
+                        await productPriceService.SyncProductsPricesAsync(result.CompanyList?.FirstOrDefault(), store);
                     }
 
                     // Navigate to Dashboard

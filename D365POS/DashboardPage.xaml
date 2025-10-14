@@ -31,7 +31,7 @@
                 <!-- Smaller Buttons -->
                 <Button Grid.Column="0" Text="Recall&#10;transaction" BackgroundColor="#A66E43" CornerRadius="8"/>
                 <Button Grid.Column="1" Text="Tender&#10;removal" BackgroundColor="#A66E43" CornerRadius="8"/>
-                <Button Grid.Column="2" Text="Show journal" BackgroundColor="#A66E43" CornerRadius="8"/>
+                <Button Grid.Column="2" Text="Show journal" BackgroundColor="#A66E43" CornerRadius="8" Clicked="OnShowJournalClicked"/>
                 <Button Grid.Column="3" Text="Reports" BackgroundColor="#A66E43" CornerRadius="8"/>
             </Grid>
 

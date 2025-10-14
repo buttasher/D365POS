@@ -81,7 +81,7 @@ namespace D365POS.Services
 
         public class PaymentDto
         {
-            public DateTime PaymentDateTime { get; set; } 
+            public DateTime PaymentDateTime { get; set; }
             public string PaymentMethod { get; set; }
             public string PaymentType { get; set; }
             public string Currency { get; set; }
@@ -91,7 +91,7 @@ namespace D365POS.Services
         public class TaxDto
         {
             public string TaxName { get; set; }
-            public string TaxRate { get; set; }
+            public double TaxRate { get; set; }
             public string TaxValue { get; set; }
         }
 

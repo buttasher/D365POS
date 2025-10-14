@@ -28,7 +28,8 @@ namespace D365POS.Services
                 UnitId = p.UnitId,
                 PLUCode = p.PLUCode,
                 SalesTaxGroup = p.SalesTaxGroup,
-                Quantity = p.Quantity
+                ItemSalesTaxGroup = p.ItemSalesTaxGroup,
+                TaxFactor = p.TaxFactor,
             }).ToList();
 
             // 4. Save to local SQLite

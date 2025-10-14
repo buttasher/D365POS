@@ -65,7 +65,8 @@ namespace D365POS.Services
             public string PLUCode { get; set; }
             public string ItemBarcode { get; set; }
             public string SalesTaxGroup { get; set; }
-            public decimal Quantity { get; set; }
+            public string ItemSalesTaxGroup { get; set; }
+            public decimal TaxFactor { get; set; }
 
         }
     }

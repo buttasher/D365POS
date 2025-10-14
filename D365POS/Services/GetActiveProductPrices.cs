@@ -61,6 +61,7 @@ namespace D365POS.Services
             public string ItemId { get; set; }
             public string UnitId { get; set; }
             public decimal UnitPrice { get; set; }
+            public decimal PriceIncludeTax { get; set; }
 
         }
     }

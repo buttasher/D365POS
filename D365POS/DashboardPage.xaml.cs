@@ -16,5 +16,9 @@ public partial class DashboardPage : ContentPage
         var salesPage = _serviceProvider.GetRequiredService<SalesPage>();
         await Navigation.PushAsync(salesPage);
     }
-
+    private async void OnShowJournalClicked(object sender, EventArgs e)
+    {
+        var journalPage = _serviceProvider.GetRequiredService<ShowJournalPage>();
+        await Navigation.PushAsync(journalPage);
+    }
 }
