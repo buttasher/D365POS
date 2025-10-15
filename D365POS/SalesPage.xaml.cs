@@ -2,8 +2,10 @@
 using D365POS.Models;
 using D365POS.Popups;
 using D365POS.Services;
+using D365POS.Helpers;
 using System.Collections.ObjectModel;
 using System.Data;
+
 
 
 
@@ -13,6 +15,7 @@ namespace D365POS
     [QueryProperty(nameof(NewAmountDue), "NewAmountDue")]
     public partial class SalesPage : ContentPage
     {
+
         private readonly DatabaseService _db;
         private List<StoreProducts> _allProducts;
         private List<StoreProductsUnit> _allUnits = new();
@@ -210,8 +213,112 @@ namespace D365POS
         private async void OnPayQuickCashClicked(object sender, EventArgs e)
         {
             await RecordSaleAsync("Cash");
-        }
 
+        }
+        private void PrintReceipt(string storeId, string cashier, string receiptId, decimal total, decimal totalTax, string payment)
+        {
+            string printerName = "EPSON TM-T82 Receipt";
+            string receipt = "";
+
+            receipt += "\x1B\x40"; // ESC @ Initialize printer
+            receipt += AlignText("Tax Invoice", 48, "center") + "\n";
+            receipt += AlignText("AL Douri Signature Specialty Food Store L.L.C", 48, "center") + "\n";
+            receipt += AlignText("Creek Harbour", 48, "center") + "\n\n";
+
+            // Widths
+            int itemWidth = 20;
+            int qtyWidth = 10;
+            int priceWidth = 10;
+            int amtWidth = 10;
+            int receiptWidth = 48;
+
+            // Receipt Info
+            receipt += AlignText($"Receipt No: {receiptId}", receiptWidth, "left") + "\n";
+            receipt += AlignText($"Store Id: {storeId}", receiptWidth, "left") + "\n";
+            receipt += AlignText($"Cashier Id: {cashier}", receiptWidth, "left") + "\n";
+            receipt += AlignText($"Date: {DateTime.Now:dd-MM-yyyy}", receiptWidth, "right") + "\n";
+            receipt += AlignText($"Time: {DateTime.Now:hh:mm tt}", receiptWidth, "right") + "\n\n";
+
+            // Header
+            receipt += AlignText("Item", itemWidth, "left") +
+                       AlignText("Qty", qtyWidth, "center") +
+                       AlignText("Price", priceWidth, "center") +
+                       AlignText("Amt", amtWidth, "right") + "\n";
+
+            receipt += "-----------------------------------------------\n";
+
+            // Items
+            foreach (var p in AddedProducts)
+            {
+                var wrappedNameLines = WrapText(p.Description, itemWidth).ToList();
+                for (int i = 0; i < wrappedNameLines.Count; i++)
+                {
+                    string itemName = AlignText(wrappedNameLines[i], itemWidth, "left");
+                    string qty = i == 0 ? AlignText(p.Quantity.ToString(), qtyWidth, "center") : AlignText("", qtyWidth, "center");
+                    string price = i == 0 ? AlignText(p.UnitPrice.ToString("F2"), priceWidth, "center") : AlignText("", priceWidth, "center");
+                    string amt = i == 0 ? AlignText(p.Total.ToString("F2"), amtWidth, "right") : AlignText("", amtWidth, "right");
+
+                    receipt += $"{itemName}{qty}{price}{amt}\n";
+                }
+            }
+
+            receipt += "-----------------------------------------------\n";
+
+            // Totals
+            decimal totalExcludingVAT = TotalSubtotal;
+            decimal vatAmount = totalTax;
+            decimal totalPayable = total + totalTax;
+            decimal paidAmount = totalPayable;
+
+            receipt += AlignText($"Total Excluding VAT: {totalExcludingVAT:F2}", receiptWidth, "left") + "\n";
+            receipt += AlignText($"VAT 5% Included: {vatAmount:F2}", receiptWidth, "left") + "\n";
+            receipt += AlignText($"Total Payable: {totalPayable:F2}", receiptWidth, "left") + "\n";
+            receipt += AlignText($"Paid Amount: {paidAmount:F2}", receiptWidth, "left") + "\n";
+            receipt += AlignText($"Payment Method: {payment}", receiptWidth, "left") + "\n\n";
+
+            // Footer
+            receipt += AlignText("Keep the bill for exchangeable Items.", receiptWidth, "left") + "\n";
+            receipt += AlignText("Exchange within 2 days.", receiptWidth, "left") + "\n";
+            receipt += AlignText("No exchange for fresh & frozen foods.", receiptWidth, "left") + "\n";
+            receipt += AlignText("Item should be returned in original packaging.", receiptWidth, "left") + "\n";
+            receipt += "\n" + AlignText("Thank you for shopping!", receiptWidth, "center") + "\n\n";
+
+            receipt += "\x1D\x56\x42\x03"; // GS V B 3 Cut paper
+
+            RawPrinterHelper.SendStringToPrinter(printerName, receipt);
+        }
+        private string AlignText(string text, int width, string align = "left", int leftMargin = 2)
+        {
+            text = text ?? "";
+
+            switch (align.ToLower())
+            {
+                case "left":
+                    return new string(' ', leftMargin) + text.PadRight(width - leftMargin);
+                case "right":
+                    return text.PadLeft(width - leftMargin) + new string(' ', leftMargin);
+                case "center":
+                    int padding = (width - text.Length) / 2;
+                    return new string(' ', padding) + text;
+                default:
+                    return new string(' ', leftMargin) + text.PadRight(width - leftMargin);
+            }
+        }
+        private IEnumerable<string> WrapText(string text, int width)
+        {
+            List<string> lines = new List<string>();
+
+            while (text.Length > width)
+            {
+                lines.Add(text.Substring(0, width));
+                text = text.Substring(width);
+            }
+
+            if (text.Length > 0)
+                lines.Add(text);
+
+            return lines;
+        }
         private async void OnPayCardClicked(object sender, EventArgs e)
         {
             await RecordSaleAsync("Card");
@@ -233,7 +340,7 @@ namespace D365POS
                 var cashier = Preferences.Get("UserId", string.Empty);
                 var total = AddedProducts.Sum(p => p.Total);
                 var totalTax = AddedProducts.Sum(p => p.TaxAmount);
-
+                var paymentMethodId = paymentMethod; // "Cash" or "Card"
 
                 var saleItem = new RecordSalesService.SaleItemDto
                 {
@@ -354,7 +461,7 @@ namespace D365POS
                     };
                     await _db.CreateTransactionTaxTrans(tax);
 
-
+                    PrintReceipt(storeId, cashier, saleItem.ReceiptId, total, totalTax, paymentMethodId);
                     await DisplayAlert("Success", $"Sale recorded successfully via {paymentMethod}!", "OK");
                     AddedProducts.Clear();
                     ProductsList.ItemsSource = null;
