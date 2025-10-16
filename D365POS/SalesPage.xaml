@@ -31,7 +31,7 @@
                                 <Label Text="Item" FontAttributes="Bold" Grid.Column="1"/>
                                 <Label Text="Quantity" FontAttributes="Bold" Grid.Column="2"/>
                                 <Label Text="UOM" FontAttributes="Bold" Grid.Column="3"/>
-                                <Label Text="Total(with tax)" FontAttributes="Bold" Grid.Column="4"/>
+                                <Label Text="Total" FontAttributes="Bold" Grid.Column="4"/>
                             </Grid>
 
                             <CollectionView x:Name="ProductsList"
@@ -44,7 +44,7 @@
                                             <Label Text="{Binding Description}" Grid.Column="1"/>
                                             <Label Text="{Binding Quantity}" Grid.Column="2" HorizontalTextAlignment="Start"/>
                                             <Label Text="{Binding UnitId}" Grid.Column="3"/>
-                                            <Label Text="{Binding Total, StringFormat='{0:N4}'}" Grid.Column="4"/>
+                                            <Label Text="{Binding Total, StringFormat='{0:N3}'}" Grid.Column="4"/>
                                         </Grid>
                                     </DataTemplate>
                                 </CollectionView.ItemTemplate>
@@ -65,19 +65,19 @@
                                 <Label Text="{Binding LinesCount}" Grid.Row="0" Grid.Column="1"/>
 
                                 <Label Text="Subtotal" Grid.Row="0" Grid.Column="2" HorizontalOptions="End"/>
-                                <Label Text="{Binding TotalSubtotal, StringFormat='{0:F4}'}" Grid.Row="0" Grid.Column="3" HorizontalOptions="End"/>
+                                <Label Text="{Binding TotalSubtotal, StringFormat='{0:N3}'}" Grid.Row="0" Grid.Column="3" HorizontalOptions="End"/>
 
                                 <Label Text="Discounts" Grid.Row="1" Grid.Column="0"/>
-                                <Label Text="0.0000" Grid.Row="1" Grid.Column="1"/>
+                                <Label Text="0.000" Grid.Row="1" Grid.Column="1"/>
 
                                 <Label Text="Payments" Grid.Row="1" Grid.Column="2" HorizontalOptions="End"/>
-                                <Label x:Name="PaymentLabel" Text="0.0000" Grid.Row="1" Grid.Column="3" HorizontalOptions="End"/>
+                                <Label x:Name="PaymentLabel" Text="0.000" Grid.Row="1" Grid.Column="3" HorizontalOptions="End"/>
 
                                 <Label Text="Tax" Grid.Row="2" Grid.Column="0"/>
-                                <Label Text="{Binding TotalTax, StringFormat='{0:N4}'}" Grid.Row="2" Grid.Column="1"/>
+                                <Label Text="{Binding TotalTax, StringFormat='{0:N3}'}" Grid.Row="2" Grid.Column="1"/>
 
                                 <Label Text="Amount due" TextColor="#A66E43" FontAttributes="Bold" Grid.Row="2" Grid.Column="2" HorizontalOptions="End"/>
-                                <Label x:Name="AmountDueLabel" Text="0.0000" TextColor="#A66E43" FontAttributes="Bold" Grid.Row="2" Grid.Column="3" HorizontalOptions="End"/>
+                                <Label x:Name="AmountDueLabel" Text="0.000" TextColor="#A66E43" FontAttributes="Bold" Grid.Row="2" Grid.Column="3" HorizontalOptions="End"/>
                             </Grid>
                         </StackLayout>
                     </Frame>

@@ -69,42 +69,15 @@ public partial class ShowJournalPage : ContentPage
     }
     private void SetLinesHeader()
     {
-        DetailsHeaderGrid.Children.Clear();
-        DetailsHeaderGrid.ColumnDefinitions.Clear();
-        DetailsHeaderGrid.ColumnDefinitions.Add(new ColumnDefinition());
-        DetailsHeaderGrid.ColumnDefinitions.Add(new ColumnDefinition());
-        DetailsHeaderGrid.ColumnDefinitions.Add(new ColumnDefinition());
-
-        var label1 = new Label { Text = "ITEM ID", FontAttributes = FontAttributes.Bold };
-        var label2 = new Label { Text = "QUANTITY", FontAttributes = FontAttributes.Bold };
-        var label3 = new Label { Text = "PRICE", FontAttributes = FontAttributes.Bold };
-
-        Grid.SetColumn(label2, 1);
-        Grid.SetColumn(label3, 2);
-
-        DetailsHeaderGrid.Children.Add(label1);
-        DetailsHeaderGrid.Children.Add(label2);
-        DetailsHeaderGrid.Children.Add(label3);
+        HeaderCol1.Text = "ITEM ID";
+        HeaderCol2.Text = "QUANTITY";
+        HeaderCol3.Text = "PRICE";
     }
-
     private void SetPaymentsHeader()
     {
-        DetailsHeaderGrid.Children.Clear();
-        DetailsHeaderGrid.ColumnDefinitions.Clear();
-        DetailsHeaderGrid.ColumnDefinitions.Add(new ColumnDefinition());
-        DetailsHeaderGrid.ColumnDefinitions.Add(new ColumnDefinition());
-        DetailsHeaderGrid.ColumnDefinitions.Add(new ColumnDefinition());
-
-        var payLabel1 = new Label { Text = "PAYMENT METHOD", FontAttributes = FontAttributes.Bold };
-        var payLabel2 = new Label { Text = "CURRENCY", FontAttributes = FontAttributes.Bold };
-        var payLabel3 = new Label { Text = "AMOUNT", FontAttributes = FontAttributes.Bold };
-
-        Grid.SetColumn(payLabel2, 1);
-        Grid.SetColumn(payLabel3, 2);
-
-        DetailsHeaderGrid.Children.Add(payLabel1);
-        DetailsHeaderGrid.Children.Add(payLabel2);
-        DetailsHeaderGrid.Children.Add(payLabel3);
+        HeaderCol1.Text = "PAYMENT METHOD";
+        HeaderCol2.Text = "CURRENCY";
+        HeaderCol3.Text = "AMOUNT";
     }
     private async Task LoadLinesTab()
     {
@@ -114,7 +87,7 @@ public partial class ShowJournalPage : ContentPage
         {
             Col1 = l.ItemId,
             Col2 = l.Qty,
-            Col3 = l.UnitPrice.ToString("F2")
+            Col3 = l.GrossAmount.ToString("F2")
         }).ToList();
     }
 
@@ -132,11 +105,15 @@ public partial class ShowJournalPage : ContentPage
 
     private void SetTabState(bool linesActive)
     {
+        // Define your active tab color
+        Color activeColor = Color.FromArgb("#A66E43");
+
         // Visual states for tabs
-        LinesTabColor = linesActive ? Colors.Black : Colors.Gray;
-        PaymentsTabColor = linesActive ? Colors.Gray : Colors.Black;
-        LinesUnderlineColor = linesActive ? Colors.Black : Colors.Transparent;
-        PaymentsUnderlineColor = linesActive ? Colors.Transparent : Colors.Black;
+        LinesTabColor = linesActive ? activeColor : Colors.Gray;
+        PaymentsTabColor = linesActive ? Colors.Gray : activeColor;
+        LinesUnderlineColor = linesActive ? activeColor : Colors.Transparent;
+        PaymentsUnderlineColor = linesActive ? Colors.Transparent : activeColor;
+
         OnPropertyChanged(nameof(LinesTabColor));
         OnPropertyChanged(nameof(PaymentsTabColor));
         OnPropertyChanged(nameof(LinesUnderlineColor));

@@ -1,12 +1,16 @@
 ﻿using CommunityToolkit.Maui.Views;
+using D365POS.Helpers;
 using D365POS.Models;
 using D365POS.Popups;
 using D365POS.Services;
-using D365POS.Helpers;
 using System.Collections.ObjectModel;
 using System.Data;
-
-
+using System.Diagnostics;
+using System.Text;
+using PdfSharp.Drawing;
+using PdfSharp.Pdf;
+using System.Diagnostics;
+using System.Globalization;
 
 
 namespace D365POS
@@ -267,7 +271,7 @@ namespace D365POS
             // Totals
             decimal totalExcludingVAT = TotalSubtotal;
             decimal vatAmount = totalTax;
-            decimal totalPayable = total + totalTax;
+            decimal totalPayable = total;
             decimal paidAmount = totalPayable;
 
             receipt += AlignText($"Total Excluding VAT: {totalExcludingVAT:F2}", receiptWidth, "left") + "\n";
@@ -338,10 +342,34 @@ namespace D365POS
                 var storeId = Preferences.Get("Store", string.Empty);
                 var company = Preferences.Get("Company", string.Empty);
                 var cashier = Preferences.Get("UserId", string.Empty);
-                var total = AddedProducts.Sum(p => p.Total);
-                var totalTax = AddedProducts.Sum(p => p.TaxAmount);
                 var paymentMethodId = paymentMethod; // "Cash" or "Card"
 
+                decimal totalAmount = 0m;
+                decimal totalTax = 0m;
+
+                // Calculate totals properly considering tax-included or not
+                foreach (var p in AddedProducts)
+                {
+                    decimal netAmount, taxAmount, grossAmount;
+
+                    if (p.PriceIncludeTax > 0) // Price already includes tax
+                    {
+                        taxAmount = Math.Round(p.Total - (p.Total / (1 + p.TaxFactor)), 4);
+                        netAmount = Math.Round(p.Total / (1 + p.TaxFactor), 4);
+                        grossAmount = p.Total;
+                    }
+                    else // Price does NOT include tax
+                    {
+                        taxAmount = Math.Round(p.Total * p.TaxFactor, 4);
+                        netAmount = p.Total;
+                        grossAmount = p.Total + taxAmount;
+                    }
+
+                    totalAmount += grossAmount;
+                    totalTax += taxAmount;
+                }
+
+                // Create sale DTO
                 var saleItem = new RecordSalesService.SaleItemDto
                 {
                     StoreId = storeId,
@@ -358,7 +386,7 @@ namespace D365POS
                             PaymentMethod = paymentMethod,
                             PaymentType = "",
                             Currency = "AED",
-                            PaymentAmount = total.ToString("F2")
+                            PaymentAmount = totalAmount.ToString("F2")
                         }
                     },
                     Taxes = new List<RecordSalesService.TaxDto>
@@ -376,7 +404,7 @@ namespace D365POS
                         UnitId = p.UnitId,
                         UnitPrice = p.UnitPrice,
                         Qty = (int)p.Quantity,
-                        LineAmount = (int)p.Total,
+                        LineAmount = p.Total,
                         TaxAmount = p.TaxAmount,
                         Action = 2,
                         ActionDateTime = DateTime.Now
@@ -391,6 +419,7 @@ namespace D365POS
 
                 if (success)
                 {
+                    // Save header with correct total
                     var header = new POSRetailTransactionTable
                     {
                         StoreId = storeId,
@@ -400,47 +429,32 @@ namespace D365POS
                         ReceiptId = saleItem.ReceiptId,
                         BusinessDate = DateTime.Now,
                         Currency = saleItem.Payments.FirstOrDefault()?.Currency ?? "AED",
-                        Total = total
+                        Total = totalAmount // REAL total including tax
                     };
                     await _db.CreateTransactionTable(header);
 
+                    // Save each line
+                    int lineNum = 1;
                     foreach (var p in AddedProducts)
                     {
-                        decimal netAmount, grossAmount, taxAmount;
-
-                       
-                        if (p.PriceIncludeTax > 0)
-                        {
-                           
-                            taxAmount = Math.Round(p.Total - (p.Total / (1 + p.TaxFactor)), 4);
-                            netAmount = Math.Round(p.Total / (1 + p.TaxFactor), 4);
-                            grossAmount = p.Total;
-                        }
-                        else
-                        {
-                            // add tax
-                            taxAmount = Math.Round(p.Total * p.TaxFactor, 4);
-                            netAmount = p.Total;
-                            grossAmount = p.Total + taxAmount;
-                        }
-
                         var line = new POSRetailTransactionSalesTrans
                         {
                             TransactionId = header.TransactionId,
-                            LineNum = LinesCount,
+                            LineNum = lineNum++,
                             ItemId = p.ItemId,
                             Qty = p.Quantity,
                             UnitId = p.UnitId,
                             UnitPrice = p.UnitPrice,
-                            NetAmount = netAmount,
-                            TaxAmount = taxAmount,
-                            GrossAmount = grossAmount,
+                            NetAmount = p.Subtotal,
+                            TaxAmount = p.TaxAmount,
+                            GrossAmount = totalAmount,
                             DiscAmount = 0,
                             DiscAmountWithoutTax = 0
                         };
                         await _db.CreateTransactionSalesTrans(line);
                     }
 
+                    // Save payment
                     var payment = new POSRetailTransactionPaymentTrans
                     {
                         TransactionId = header.TransactionId,
@@ -448,10 +462,11 @@ namespace D365POS
                         PaymentMethod = paymentMethod,
                         PaymentType = "",
                         Currency = saleItem.Payments.FirstOrDefault()?.Currency ?? "AED",
-                        PaymentAmount = AddedProducts.Sum(p => p.Total)
+                        PaymentAmount = totalAmount
                     };
                     await _db.CreateTransactionPaymentTrans(payment);
 
+                    // Save tax
                     var tax = new POSRetailTransactionTaxTrans
                     {
                         TransactionId = header.TransactionId,
@@ -461,8 +476,12 @@ namespace D365POS
                     };
                     await _db.CreateTransactionTaxTrans(tax);
 
-                    PrintReceipt(storeId, cashier, saleItem.ReceiptId, total, totalTax, paymentMethodId);
                     await DisplayAlert("Success", $"Sale recorded successfully via {paymentMethod}!", "OK");
+
+                    // Print receipt
+                    PrintReceipt(storeId, cashier, saleItem.ReceiptId, totalAmount, totalTax, paymentMethodId);
+
+                    // Reset UI
                     AddedProducts.Clear();
                     ProductsList.ItemsSource = null;
                     ProductsList.ItemsSource = AddedProducts;

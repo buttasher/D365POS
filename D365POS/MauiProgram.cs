@@ -1,7 +1,8 @@
-﻿using D365POS.Services;
-using CommunityToolkit.Maui;
-using Microsoft.Extensions.Logging;
+﻿using CommunityToolkit.Maui;
 using D365POS.Controls; // <- add this for NoBorderEntry
+using D365POS.Services;
+using Microsoft.Extensions.Logging;
+using System.Text;
 
 namespace D365POS
 {
@@ -9,6 +10,8 @@ namespace D365POS
     {
         public static MauiApp CreateMauiApp()
         {
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
             var builder = MauiApp.CreateBuilder();
 
             builder
