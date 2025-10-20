@@ -367,12 +367,7 @@ namespace D365POS
         }
         private async void OnVoidTransactionClicked(object sender, EventArgs e)
         {
-            if (AddedProducts == null || !AddedProducts.Any())
-            {
-                await DisplayAlert("No items", "Please add at least one product before voiding.", "OK");
-                return;
-            }
-
+         
             bool confirm = await DisplayAlert("Confirm", "Are you sure you want to void this transaction?", "Yes", "No");
             if (!confirm)
                 return;
