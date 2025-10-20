@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<toolkit:Popup
+        xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+        xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+        x:Class="D365POS.Popups.SetQuantityPopup"
+        Color="Transparent">
+
+    <Frame x:Name="PopupFrame"
+           CornerRadius="20"
+           HasShadow="True"
+           Padding="25"
+           VerticalOptions="Center"
+           HorizontalOptions="Center"
+           WidthRequest="360">
+
+        <Grid>
+            <!-- MAIN CONTENT -->
+            <VerticalStackLayout Spacing="25">
+                <!-- Header -->
+                <Label Text="Set Quantity"
+                       FontSize="20"
+                       FontAttributes="Bold"
+                       TextColor="#A66E43"
+                       HorizontalTextAlignment="Center"/>
+
+                <!-- Entry + Button -->
+                <HorizontalStackLayout Spacing="15" HorizontalOptions="Center">
+                    <Entry x:Name="ItemIdEntry"
+                           Placeholder="Enter Quantity"
+                           PlaceholderColor="#999"
+                           HorizontalOptions="Fill"
+                           VerticalOptions="Center"/>
+
+                    <Button Text="Set"
+                            WidthRequest="120"
+                            BackgroundColor="#A66E43"
+                            CornerRadius="18"
+                            Clicked="OnSetButtonClicked"/>
+                </HorizontalStackLayout>
+
+            </VerticalStackLayout>
+
+            <!-- LOADER OVERLAY -->
+            <Grid x:Name="loaderOverlay"
+                  IsVisible="False"
+                  VerticalOptions="Fill"
+                  HorizontalOptions="Fill">
+                
+                <ActivityIndicator x:Name="activityIndicator"
+                                   Color="#A66E43"
+                                   IsRunning="True"
+                                   WidthRequest="60"
+                                   HeightRequest="60"
+                                   VerticalOptions="Center"
+                                   HorizontalOptions="Center"/>
+            </Grid>
+        </Grid>
+    </Frame>
+    
+</toolkit:Popup>

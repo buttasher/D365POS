@@ -94,6 +94,9 @@
 	  <MauiXaml Update="SalesPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
+	  <MauiXaml Update="Popups\SetQuantityPopup.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
 	  <MauiXaml Update="ShowJournalPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>

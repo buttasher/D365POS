@@ -3,79 +3,97 @@
              x:Class="D365POS.ShowJournalPage"
              Title="Transactions Journal">
 
-    <Grid RowDefinitions="Auto,*,Auto" Padding="20" RowSpacing="10">
+    <Grid RowDefinitions="Auto,*" Padding="20" RowSpacing="20">
 
-        <!-- Main Content -->
+        <!-- ===== TOP SECTION: Transactions + Customer ===== -->
+        <Grid Grid.Row="0" ColumnDefinitions="3*,Auto" ColumnSpacing="20">
+
+            <!-- Journal List -->
+            <CollectionView x:Name="JournalList"
+                            SelectionMode="Single"
+                            HeightRequest="250"
+                            SelectionChanged="OnJournalSelected">
+                <CollectionView.Header>
+                    <Grid Padding="10"
+                          ColumnDefinitions="2*,*,*,*,2*,*"
+                          BackgroundColor="#A66E43">
+                        <Label Text="BUSINESS DATE" FontAttributes="Bold"/>
+                        <Label Text="STAFF ID" Grid.Column="1" FontAttributes="Bold"/>
+                        <Label Text="TRANSACTION TYPE" Grid.Column="2" FontAttributes="Bold"/>
+                        <Label Text="TRANSACTION ID" Grid.Column="3" FontAttributes="Bold"/>
+                        <Label Text="TOTAL" Grid.Column="4" FontAttributes="Bold"/>
+                    </Grid>
+                </CollectionView.Header>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Padding="10"
+                              ColumnDefinitions="2*,*,*,*,2*,*"
+                              BackgroundColor="{Binding IsSelected, Converter={StaticResource BoolToColorConverter}}">
+                            <Label Text="{Binding BusinessDate, StringFormat='{0:MM/dd/yyyy hh:mm tt}'}"/>
+                            <Label Text="{Binding ShiftStaffId}" Grid.Column="1"/>
+                            <Label Text="{Binding TransactionType}" Grid.Column="2"/>
+                            <Label Text="{Binding ReceiptId}" Grid.Column="3"/>
+                            <Label Text="{Binding Total, StringFormat='{0:N3}'}" Grid.Column="4"/>
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <!-- Customer Info -->
+            <StackLayout Grid.Column="1" Spacing="10" VerticalOptions="Start">
+                <Label Text="Customer" FontSize="18" FontAttributes="Bold"/>
+                <Label Text="There is no customer associated with this sale."
+                       FontSize="14"
+                       WidthRequest="200"/>
+            </StackLayout>
+        </Grid>
+
+        <!-- ===== BOTTOM SECTION: Lines/Payments + Totals ===== -->
         <Grid Grid.Row="1" ColumnDefinitions="3*,Auto" ColumnSpacing="20">
 
-            <!-- Left Section -->
-            <Grid RowDefinitions="*,Auto,*" RowSpacing="10">
+            <!-- LEFT: Lines & Payments (column 0) -->
+            <Grid Grid.Column="0" RowDefinitions="Auto, *" RowSpacing="10" VerticalOptions="Fill">
 
-                <!-- Journal List -->
-                <CollectionView x:Name="JournalList"
-                                Grid.Row="0"
-                                SelectionMode="Single"
-                                HeightRequest="250"
-                                SelectionChanged="OnJournalSelected">
-                    <CollectionView.Header>
-                        <Grid Padding="10" ColumnDefinitions="2*,*,*,*,2*,*" BackgroundColor="#A66E43">
-                            <Label Text="BUSINESS DATE" FontAttributes="Bold"/>
-                            <Label Text="STAFF ID" Grid.Column="1" FontAttributes="Bold"/>
-                            <Label Text="TRANSACTION TYPE" Grid.Column="2" FontAttributes="Bold"/>
-                            <Label Text="TRANSACTION ID" Grid.Column="3" FontAttributes="Bold"/>
-                            <Label Text="TOTAL" Grid.Column="4" FontAttributes="Bold"/>
-                        </Grid>
-                    </CollectionView.Header>
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate>
-                            <Grid Padding="10" ColumnDefinitions="2*,*,*,*,2*,*"
-                                  BackgroundColor="{Binding IsSelected, Converter={StaticResource BoolToColorConverter}}">
-                                <Label Text="{Binding BusinessDate, StringFormat='{0:MM/dd/yyyy hh:mm tt}'}"/>
-                                <Label Text="{Binding ShiftStaffId}" Grid.Column="1"/>
-                                <Label Text="{Binding TransactionType}" Grid.Column="2"/>
-                                <Label Text="{Binding ReceiptId}" Grid.Column="3"/>
-                                <Label Text="{Binding Total}" Grid.Column="4"/>
-                            </Grid>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
-
-                <!-- Tabs: Lines | Payments -->
-                <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto" ColumnSpacing="40">
+                <!-- Tabs (auto height) -->
+                <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="40" Grid.Row="0">
                     <StackLayout>
                         <Label Text="Lines"
-                               FontAttributes="Bold"
-                               TextColor="{Binding LinesTabColor}">
+                       FontAttributes="Bold"
+                       TextColor="{Binding LinesTabColor}">
                             <Label.GestureRecognizers>
                                 <TapGestureRecognizer Tapped="OnLinesTabClicked"/>
                             </Label.GestureRecognizers>
                         </Label>
                         <BoxView HeightRequest="2"
-                                 BackgroundColor="{Binding LinesUnderlineColor}"
-                                 HorizontalOptions="Fill"/>
+                         BackgroundColor="{Binding LinesUnderlineColor}"
+                         HorizontalOptions="Fill"/>
                     </StackLayout>
 
                     <StackLayout Grid.Column="1">
                         <Label Text="Payments"
-                               FontAttributes="Bold"
-                               TextColor="{Binding PaymentsTabColor}">
+                       FontAttributes="Bold"
+                       TextColor="{Binding PaymentsTabColor}">
                             <Label.GestureRecognizers>
                                 <TapGestureRecognizer Tapped="OnPaymentsTabClicked"/>
                             </Label.GestureRecognizers>
                         </Label>
                         <BoxView HeightRequest="2"
-                                 BackgroundColor="{Binding PaymentsUnderlineColor}"
-                                 HorizontalOptions="Fill"/>
+                         BackgroundColor="{Binding PaymentsUnderlineColor}"
+                         HorizontalOptions="Fill"/>
                     </StackLayout>
                 </Grid>
 
-                <!-- Lines/Payments Section -->
-                <CollectionView x:Name="DetailsList" Grid.Row="2">
+                <!-- Details list (fills remaining space) -->
+                <CollectionView x:Name="DetailsList"
+                        Grid.Row="1"
+                        VerticalOptions="Fill"
+                        HorizontalOptions="Fill"
+                        SelectionMode="None">
                     <CollectionView.Header>
                         <Grid x:Name="DetailsHeaderGrid"
-                              Padding="10"
-                              ColumnDefinitions="*,*,*"
-                              BackgroundColor="#A66E43">
+                      Padding="10"
+                      ColumnDefinitions="*,*,*"
+                      BackgroundColor="#A66E43">
                             <Label x:Name="HeaderCol1" Text="ITEM ID" FontAttributes="Bold"/>
                             <Label x:Name="HeaderCol2" Text="QUANTITY" Grid.Column="1" FontAttributes="Bold" HorizontalTextAlignment="Center"/>
                             <Label x:Name="HeaderCol3" Text="PRICE" Grid.Column="2" FontAttributes="Bold" HorizontalTextAlignment="End"/>
@@ -94,36 +112,34 @@
                 </CollectionView>
             </Grid>
 
-            <!-- Right Section -->
-            <StackLayout Grid.Column="1" Spacing="10" VerticalOptions="Start">
-                <Label Text="Customer" FontSize="18" FontAttributes="Bold"/>
-                <Label Text="There is no customer associated with this sale."
-                       FontSize="14"
-                       WidthRequest="200"/>
+            <!-- RIGHT: Totals (column 1) -->
+            <Grid Grid.Column="1"
+                  RowDefinitions="Auto,Auto,Auto"
+                  ColumnDefinitions="*,Auto"
+                  VerticalOptions="Start"
+                  HorizontalOptions="Start"
+                  Margin="0,30,0,0"
+                  WidthRequest="220">
+                <!-- optional fixed width for consistent layout -->
+                <Label Text="SUBTOTAL" Grid.Row="0" VerticalOptions="Center"/>
+                <Label Text="{Binding Subtotal, StringFormat='{0:N3}'}"
+                       Grid.Row="0" Grid.Column="1"
+                       HorizontalTextAlignment="End"
+                       VerticalOptions="Center"/>
 
-                <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="*,Auto" Margin="0,30,0,0">
-                    <Label Text="SUBTOTAL" Grid.Row="0"/>
-                    <Label Text="{Binding SelectedSubtotal, StringFormat='{0:F2}'}"
-                           Grid.Row="0" Grid.Column="1"
-                           HorizontalTextAlignment="End"/>
+                <Label Text="TAX" Grid.Row="1" VerticalOptions="Center"/>
+                <Label Text="{Binding Tax, StringFormat='{0:N3}'}"
+                       Grid.Row="1" Grid.Column="1"
+                       HorizontalTextAlignment="End"
+                       VerticalOptions="Center"/>
 
-                    <Label Text="TAX" Grid.Row="1" />
-                    <Label Text="{Binding SelectedTax, StringFormat='{0:F2}'}"
-                           Grid.Row="1" Grid.Column="1"
-                           HorizontalTextAlignment="End"/>
-
-                    <Label Text="TOTAL" Grid.Row="2"/>
-                    <Label Text="{Binding SelectedTotal, StringFormat='{0:F2}'}"
-                           Grid.Row="2" Grid.Column="1"
-                           HorizontalTextAlignment="End"/>
-
-                    <Label Text="TOTAL PAYMENTS" Grid.Row="3" FontAttributes="Bold"/>
-                    <Label Text="{Binding SelectedPayment, StringFormat='{0:F2}'}"
-                           Grid.Row="3" Grid.Column="1"
-                           FontAttributes="Bold"
-                           HorizontalTextAlignment="End"/>
-                </Grid>
-            </StackLayout>
+                <Label Text="TOTAL" Grid.Row="2" FontAttributes="Bold" VerticalOptions="Center"/>
+                <Label Text="{Binding Total, StringFormat='{0:N3}'}"
+                       Grid.Row="2" Grid.Column="1"
+                       FontAttributes="Bold"
+                       HorizontalTextAlignment="End"
+                       VerticalOptions="Center"/>
+            </Grid>
         </Grid>
     </Grid>
 </ContentPage>

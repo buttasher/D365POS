@@ -5,12 +5,7 @@ using D365POS.Popups;
 using D365POS.Services;
 using System.Collections.ObjectModel;
 using System.Data;
-using System.Diagnostics;
-using System.Text;
-using PdfSharp.Drawing;
-using PdfSharp.Pdf;
-using System.Diagnostics;
-using System.Globalization;
+
 
 
 namespace D365POS
@@ -27,6 +22,7 @@ namespace D365POS
         public int LinesCount => AddedProducts?.Count ?? 0;
         public ObservableCollection<StoreProducts> FilteredProducts { get; set; }
         public ObservableCollection<StoreProducts> AddedProducts { get; set; }
+        private StoreProducts _selectedProduct;
 
         private bool _isSearchListVisible;
         public bool IsSearchListVisible
@@ -119,6 +115,10 @@ namespace D365POS
             _allProducts = await _db.GetAllProducts();
             _allUnits = await _db.GetAllProductsUnit();
         }
+        private void OnProductSelectedFromList(object sender, SelectionChangedEventArgs e)
+        {
+            _selectedProduct = e.CurrentSelection.FirstOrDefault() as StoreProducts;
+        }
         private void RecalculateTotals()
         {
             TotalTax = AddedProducts.Sum(p => p.TaxAmount);
@@ -168,16 +168,19 @@ namespace D365POS
             // Get the unit price from StoreProductsUnit table
             var unit = _allUnits.FirstOrDefault(u => u.ItemId == product.ItemId);
             decimal unitPrice = unit?.UnitPrice ?? 0;
+            decimal priceIncludeTax = unit?.PriceIncludeTax ?? 0;   
 
             if (existing != null)
             {
                 existing.Quantity += 1;
                 existing.UnitPrice = unitPrice; // update unit price
+                existing.PriceIncludeTax = priceIncludeTax;
             }
             else
             {
                 product.Quantity = 1;
                 product.UnitPrice = unitPrice; // set unit price for new product
+                product.PriceIncludeTax = priceIncludeTax;
                 AddedProducts.Add(product);
             }
             RecalculateTotals();
@@ -217,7 +220,42 @@ namespace D365POS
         private async void OnPayQuickCashClicked(object sender, EventArgs e)
         {
             await RecordSaleAsync("Cash");
+        }
+        private async void OnSetButtonClicked(object sender, EventArgs e)
+        {
+            if (ProductsList.SelectedItem is not StoreProducts selectedProduct)
+            {
+                await DisplayAlert("No Selection", "Please select a product first.", "OK");
+                return;
+            }
 
+            loaderOverlay.IsVisible = true;
+            activityIndicator.IsRunning = true;
+
+            try
+            {
+                var popup = new SetQuantityPopup(selectedProduct);
+                var result = await this.ShowPopupAsync(popup);
+
+                if (result is bool success && success)
+                {
+                    // Refresh collection to reflect updated quantity and total
+                    ProductsList.ItemsSource = null;
+                    ProductsList.ItemsSource = AddedProducts;
+
+                    // Update totals
+                    RecalculateTotals();
+                }
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Error", $"Failed to open popup: {ex.Message}", "OK");
+            }
+            finally
+            {
+                loaderOverlay.IsVisible = false;
+                activityIndicator.IsRunning = false;
+            }
         }
         private void PrintReceipt(string storeId, string cashier, string receiptId, decimal total, decimal totalTax, string payment)
         {
@@ -327,6 +365,81 @@ namespace D365POS
         {
             await RecordSaleAsync("Card");
         }
+        private async void OnVoidTransactionClicked(object sender, EventArgs e)
+        {
+            if (AddedProducts == null || !AddedProducts.Any())
+            {
+                await DisplayAlert("No items", "Please add at least one product before voiding.", "OK");
+                return;
+            }
+
+            bool confirm = await DisplayAlert("Confirm", "Are you sure you want to void this transaction?", "Yes", "No");
+            if (!confirm)
+                return;
+
+            loaderOverlay.IsVisible = true;
+
+            try
+            {
+                var storeId = Preferences.Get("Store", string.Empty);
+                var company = Preferences.Get("Company", string.Empty);
+                var cashier = Preferences.Get("UserId", string.Empty);
+
+                // Create void transaction header
+                var header = new POSRetailTransactionTable
+                {
+                    StoreId = storeId,
+                    TerminalId = "POS1",
+                    ShiftId = "Morning",
+                    ShiftStaffId = cashier,
+                    ReceiptId = $"VOID-{DateTime.Now:yyyyMMddHHmmss}",
+                    BusinessDate = DateTime.Now,
+                    Currency = "AED",
+                    Total = AddedProducts.Sum(p => p.Total),
+                    TransactionType = POSRetailTransactionTable.TransactionTypeEnum.Void
+                };
+
+                await _db.CreateTransactionTable(header);
+
+                // Optionally, also store line items if you want record trail
+                int lineNum = 1;
+                foreach (var p in AddedProducts)
+                {
+                    var line = new POSRetailTransactionSalesTrans
+                    {
+                        TransactionId = header.TransactionId,
+                        LineNum = lineNum++,
+                        ItemId = p.ItemId,
+                        Qty = p.Quantity,
+                        UnitId = p.UnitId,
+                        UnitPrice = p.UnitPrice,
+                        NetAmount = p.Subtotal,
+                        TaxAmount = p.TaxAmount,
+                        GrossAmount = p.Total,
+                        DiscAmount = 0,
+                        DiscAmountWithoutTax = 0
+                    };
+                    await _db.CreateTransactionSalesTrans(line);
+                }
+
+                await DisplayAlert("Success", "Transaction has been voided successfully!", "OK");
+
+                // Reset UI
+                AddedProducts.Clear();
+                ProductsList.ItemsSource = null;
+                ProductsList.ItemsSource = AddedProducts;
+                PaymentLabel.Text = "0.0000";
+                AmountDueLabel.Text = "0.0000";
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Error", $"Failed to void transaction: {ex.Message}", "OK");
+            }
+            finally
+            {
+                loaderOverlay.IsVisible = false;
+            }
+        }
         private async Task RecordSaleAsync(string paymentMethod)
         {
             if (AddedProducts == null || !AddedProducts.Any())
@@ -386,7 +499,7 @@ namespace D365POS
                             PaymentMethod = paymentMethod,
                             PaymentType = "",
                             Currency = "AED",
-                            PaymentAmount = totalAmount.ToString("F2")
+                            PaymentAmount = totalAmount.ToString("N3")
                         }
                     },
                     Taxes = new List<RecordSalesService.TaxDto>

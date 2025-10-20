@@ -36,7 +36,9 @@
 
                             <CollectionView x:Name="ProductsList"
                                             Grid.Row="1"
-                                            ItemsSource="{Binding AddedProducts}">
+                                            ItemsSource="{Binding AddedProducts}"
+                                            SelectionMode="Single"
+                                            SelectionChanged="OnProductSelectedFromList">
                                 <CollectionView.ItemTemplate>
                                     <DataTemplate>
                                         <Grid ColumnDefinitions="*,4*,2*,*,*" Padding="5">
@@ -91,16 +93,18 @@
                           ColumnSpacing="10"
                           RowSpacing="10"
                           Margin="0,20,0,0">
-                        <Button Grid.Row="0" Grid.Column="0" Text="Set quantity" BackgroundColor="#A66E43" HeightRequest="60"/>
+
+                        <Button Grid.Row="0" Grid.Column="0" Text="Set quantity" BackgroundColor="#A66E43" HeightRequest="60" Clicked="OnSetButtonClicked"/>
                         <Button Grid.Row="0" Grid.Column="1" Text="Change unit of measure" BackgroundColor="#A66E43" HeightRequest="60"/>
                         <Button Grid.Row="1" Grid.Column="0" Text="Void product" BackgroundColor="#A66E43" HeightRequest="60"/>
-                        <Button Grid.Row="1" Grid.Column="1" Text="Void transaction" BackgroundColor="#A66E43" HeightRequest="60"/>
+                        <Button Grid.Row="1" Grid.Column="1" Text="Void transaction" BackgroundColor="#A66E43" HeightRequest="60" Clicked="OnVoidTransactionClicked"/>
                         <Button Grid.Row="2" Grid.Column="0" Text="Transaction comment reports" BackgroundColor="#A66E43" HeightRequest="60"/>
                         <Button Grid.Row="2" Grid.Column="1" Text="View reports" BackgroundColor="#A66E43" HeightRequest="60"/>
                         <Button Grid.Row="3" Grid.Column="0" Text="Suspend transaction" BackgroundColor="#A66E43" HeightRequest="60"/>
                         <Button Grid.Row="3" Grid.Column="1" Text="Void payment" BackgroundColor="#A66E43" HeightRequest="60"/>
                         <Button Grid.Row="4" Grid.Column="0" Text="Price check" BackgroundColor="#A66E43" HeightRequest="60" Clicked="OnPriceCheckClicked"/>
                         <Button Grid.Row="4" Grid.Column="1" Text="Recall transaction" BackgroundColor="#A66E43" HeightRequest="60"/>
+                        
                     </Grid>
 
                     <!-- Payment Buttons -->

@@ -9,6 +9,39 @@ public partial class ShowJournalPage : ContentPage
     private int _selectedTransactionId;
     private bool _isPaymentsTabActive = false;
 
+    private decimal _subtotal;
+    public decimal Subtotal
+    {
+        get => _subtotal;
+        set
+        {
+            _subtotal = value;
+            OnPropertyChanged(nameof(Subtotal));
+        }
+    }
+
+    private decimal _tax;
+    public decimal Tax
+    {
+        get => _tax;
+        set
+        {
+            _tax = value;
+            OnPropertyChanged(nameof(Tax));
+        }
+    }
+
+    private decimal _total;
+    public decimal Total
+    {
+        get => _total;
+        set
+        {
+            _total = value;
+            OnPropertyChanged(nameof(Total));
+        }
+    }
+
     public ShowJournalPage(DatabaseService db)
     {
         InitializeComponent();
@@ -36,12 +69,34 @@ public partial class ShowJournalPage : ContentPage
 
         _selectedTransactionId = selected.TransactionId;
 
+        await LoadTotalsAsync();
+
+
         if (_isPaymentsTabActive)
             await LoadPaymentsTab();
         else
             await LoadLinesTab();
     }
 
+    private async Task LoadTotalsAsync()
+    {
+        try
+        {
+            var lines = await _db.GetListAsync<POSRetailTransactionSalesTrans>(
+                x => x.TransactionId == _selectedTransactionId);
+
+            var taxTrans = await _db.GetListAsync<POSRetailTransactionTaxTrans>(
+                x => x.TransactionId == _selectedTransactionId);
+
+            Subtotal = lines.Sum(l => l.NetAmount);
+            Tax = taxTrans.Sum(t => t.TaxAmount);
+            Total = lines.Sum(l => l.GrossAmount);
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Error", $"Failed to load totals: {ex.Message}", "OK");
+        }
+    }
     private async void OnLinesTabClicked(object sender, TappedEventArgs e)
     {
         _isPaymentsTabActive = false;
@@ -87,7 +142,7 @@ public partial class ShowJournalPage : ContentPage
         {
             Col1 = l.ItemId,
             Col2 = l.Qty,
-            Col3 = l.GrossAmount.ToString("F2")
+            Col3 = l.GrossAmount.ToString("N3")
         }).ToList();
     }
 
@@ -99,7 +154,7 @@ public partial class ShowJournalPage : ContentPage
         {
             Col1 = p.PaymentMethod,
             Col2 = p.Currency,
-            Col3 = p.PaymentAmount.ToString("F2")
+            Col3 = p.PaymentAmount.ToString("N3")
         }).ToList();
     }
 

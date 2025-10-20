@@ -8,7 +8,7 @@ namespace D365POS.Services
     {
         private static readonly string TenantId = "1d30208b-6f34-41ab-be26-f8b037cded0c";
         private static readonly string ClientId = "329ddef5-e60b-444b-b252-bafc7329bb42";
-        private static readonly string ClientSecret = "I0s8Q~yAO03GMX2NI2D4u15RG4wv2LqVZVhM9av5"; 
+        private static readonly string ClientSecret = "gwE8Q~dA3kTSwD1LSECijJFOuBMuyyoPAH8a_cPr"; 
         private static readonly string Resource = "https://tbd365deve8cbf0eb94119fe1devaos.cloudax.uae.dynamics.com";
 
         private static DateTimeOffset _tokenExpiry = DateTimeOffset.MinValue;
