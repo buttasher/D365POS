@@ -85,14 +85,8 @@ namespace D365POS.Models
         {
             get
             {
-                if (PriceIncludeTax > 0)
-                {
-                    return Math.Round(Total / (1 + TaxFactor), 4);
-                }
-                else
-                {
-                    return Total;
-                }
+                return Total + TaxAmount;
+                
             }
         }
 

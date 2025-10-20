@@ -104,7 +104,7 @@
                         <Button Grid.Row="3" Grid.Column="1" Text="Void payment" BackgroundColor="#A66E43" HeightRequest="60"/>
                         <Button Grid.Row="4" Grid.Column="0" Text="Price check" BackgroundColor="#A66E43" HeightRequest="60" Clicked="OnPriceCheckClicked"/>
                         <Button Grid.Row="4" Grid.Column="1" Text="Recall transaction" BackgroundColor="#A66E43" HeightRequest="60"/>
-                        
+
                     </Grid>
 
                     <!-- Payment Buttons -->

@@ -188,7 +188,7 @@ namespace D365POS
         private async void OnPayCashClicked(object sender, EventArgs e)
         {
             var totalAmount = AddedProducts.Sum(p => p.Total);
-            await Shell.Current.GoToAsync($"{nameof(PayCashPage)}?AmountDue={totalAmount}");
+            await Shell.Current.GoToAsync($"{nameof(PayCashPage)}?AmountDue={TotalSubtotal}");
         }
         private async void OnPriceCheckClicked(object sender, EventArgs e)
         {
@@ -454,11 +454,11 @@ namespace D365POS
 
                 decimal totalAmount = 0m;
                 decimal totalTax = 0m;
-
+                decimal netAmount = 0m;
                 // Calculate totals properly considering tax-included or not
                 foreach (var p in AddedProducts)
                 {
-                    decimal netAmount, taxAmount, grossAmount;
+                    decimal taxAmount, grossAmount;
 
                     if (p.PriceIncludeTax > 0) // Price already includes tax
                     {
@@ -475,6 +475,7 @@ namespace D365POS
 
                     totalAmount += grossAmount;
                     totalTax += taxAmount;
+                    netAmount += netAmount;
                 }
 
                 // Create sale DTO
@@ -553,9 +554,9 @@ namespace D365POS
                             Qty = p.Quantity,
                             UnitId = p.UnitId,
                             UnitPrice = p.UnitPrice,
-                            NetAmount = p.Subtotal,
+                            NetAmount = netAmount,
                             TaxAmount = p.TaxAmount,
-                            GrossAmount = totalAmount,
+                            GrossAmount = p.Subtotal,
                             DiscAmount = 0,
                             DiscAmountWithoutTax = 0
                         };
