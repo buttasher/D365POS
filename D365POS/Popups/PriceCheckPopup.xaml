@@ -5,73 +5,81 @@
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     x:Class="D365POS.Popups.PriceCheckPopup"
     Color="Transparent">
-
+    
     <Frame x:Name="PopupFrame"
            CornerRadius="20"
            HasShadow="True"
-           Padding="25"
+           Padding="30"
            VerticalOptions="Center"
            HorizontalOptions="Center"
-           WidthRequest="360">
+           WidthRequest="600"  
+           HeightRequest="610">
+        <!-- Added height -->
 
         <Grid>
             <!-- MAIN CONTENT -->
-            <VerticalStackLayout Spacing="25">
+            <VerticalStackLayout Spacing="30">
                 <!-- Header -->
                 <Label Text="Price Check"
-                       FontSize="20"
+                       FontSize="24"
                        FontAttributes="Bold"
                        TextColor="#A66E43"
                        HorizontalTextAlignment="Center"/>
 
-                <!-- Entry + Button -->
-                <HorizontalStackLayout Spacing="15" HorizontalOptions="Center">
-                    <Entry x:Name="ItemIdEntry"
-                           Placeholder="Enter Item ID"
-                           PlaceholderColor="#999"
-                           HorizontalOptions="Fill"
-                           VerticalOptions="Center"/>
+                    <!-- Entry + Button -->
+                    <HorizontalStackLayout Spacing="20" HorizontalOptions="Center">
+                        <Entry x:Name="ItemIdEntry"
+                               Placeholder="Enter Item ID"
+                               PlaceholderColor="#999"
+                               HorizontalOptions="Fill"
+                               VerticalOptions="Center"
+                               WidthRequest="340"/>
+                        <!-- wider entry -->
 
-                    <Button Text="Check"
-                            WidthRequest="120"
-                            BackgroundColor="#A66E43"
-                            CornerRadius="18"
-                            Clicked="OnCheckPriceClicked"/>
-                </HorizontalStackLayout>
+                        <Button Text="Check"
+                                WidthRequest="170" 
+                                HeightRequest="50"
+                                BackgroundColor="#A66E43"
+                                CornerRadius="15"
+                                Clicked="OnCheckPriceClicked"/>
+                    </HorizontalStackLayout>
 
-                <!-- Result Section -->
-                <Frame x:Name="ResultFrame"
-                       IsVisible="False"
-                       Padding="15"
-                       BorderColor="#A66E43"
-                       CornerRadius="15"
-                       HasShadow="False"
-                       HeightRequest="260">
-                    <ScrollView>
-                        <VerticalStackLayout x:Name="ResultListLayout" Spacing="8" Padding="0,0,0,10">
-                            <Label x:Name="UnitIdLabel"
-                                   FontSize="16" />
-                            <Label x:Name="PriceLabel"
-                                   FontSize="16" />
-                        </VerticalStackLayout>
-                    </ScrollView>
-                </Frame>
+                    <!-- Result Section -->
+                    <Frame x:Name="ResultFrame"
+                           IsVisible="False"
+                           Padding="20"
+                           BorderColor="#A66E43"
+                           CornerRadius="15"
+                           HasShadow="False"
+                           HeightRequest="400">
+                        <!-- bigger result area -->
+                        <ScrollView>
+                            <VerticalStackLayout x:Name="ResultListLayout" Spacing="10" Padding="0,0,0,10">
+                                <Label x:Name="UnitIdLabel"
+                                       FontSize="18" />
+                                <Label x:Name="PriceLabel"
+                                       FontSize="18" />
+                            </VerticalStackLayout>
+                        </ScrollView>
+                    </Frame>
             </VerticalStackLayout>
 
             <!-- LOADER OVERLAY -->
             <Grid x:Name="loaderOverlay"
-              IsVisible="False"
-              VerticalOptions="Fill"
-              HorizontalOptions="Fill">
+                   IsVisible="False"
+                   VerticalOptions="Fill"
+                   HorizontalOptions="Fill"
+                   Grid.ColumnSpan="2">
                 <ActivityIndicator x:Name="activityIndicator"
-                               Color="#A66E43"
-                               IsRunning="True"
-                               WidthRequest="60"
-                               HeightRequest="60"
-                               VerticalOptions="Center"
-                               HorizontalOptions="Center"/>
+                     Color="#A66E43"
+                     IsRunning="True"
+                     WidthRequest="60"
+                     HeightRequest="60"
+                     VerticalOptions="Center"
+                     HorizontalOptions="Center"/>
             </Grid>
+
         </Grid>
     </Frame>
-    
+                
 </toolkit:Popup>

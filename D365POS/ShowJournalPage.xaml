@@ -1,6 +1,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="D365POS.ShowJournalPage"
+             xmlns:controls="clr-namespace:D365POS.Controls"
              Title="Transactions Journal">
 
     <Grid RowDefinitions="Auto,*" Padding="20" RowSpacing="20">
@@ -85,15 +86,15 @@
 
                 <!-- Details list (fills remaining space) -->
                 <CollectionView x:Name="DetailsList"
-                        Grid.Row="1"
-                        VerticalOptions="Fill"
-                        HorizontalOptions="Fill"
-                        SelectionMode="None">
+                                Grid.Row="1"
+                                VerticalOptions="Fill"
+                                HorizontalOptions="Fill"
+                                SelectionMode="None">
                     <CollectionView.Header>
                         <Grid x:Name="DetailsHeaderGrid"
-                      Padding="10"
-                      ColumnDefinitions="*,*,*"
-                      BackgroundColor="#A66E43">
+                              Padding="10"
+                              ColumnDefinitions="*,*,*"
+                              BackgroundColor="#A66E43">
                             <Label x:Name="HeaderCol1" Text="ITEM ID" FontAttributes="Bold"/>
                             <Label x:Name="HeaderCol2" Text="QUANTITY" Grid.Column="1" FontAttributes="Bold" HorizontalTextAlignment="Center"/>
                             <Label x:Name="HeaderCol3" Text="PRICE" Grid.Column="2" FontAttributes="Bold" HorizontalTextAlignment="End"/>

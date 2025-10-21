@@ -1,3 +1,8 @@
+using CommunityToolkit.Maui.Views;
+using D365POS.Services;
+using Microsoft.Maui.Controls;
+using D365POS.Popups;
+
 namespace D365POS;
 
 public partial class DashboardPage : ContentPage
@@ -20,5 +25,32 @@ public partial class DashboardPage : ContentPage
     {
         var journalPage = _serviceProvider.GetRequiredService<ShowJournalPage>();
         await Navigation.PushAsync(journalPage);
+    }
+    private async void OnPriceCheckClicked(object sender, EventArgs e)
+    {
+        loaderOverlay.IsVisible = true;
+        activityIndicator.IsRunning = true;
+
+        var productPriceSyncService = new ProductPriceSyncService();
+        var popup = new PriceCheckPopup();
+
+        var storeId = Preferences.Get("Store", string.Empty);
+        var company = Preferences.Get("Company", string.Empty);
+
+        try
+        {
+            await productPriceSyncService.SyncProductsPricesAsync(company, storeId);
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Error", $"Failed to sync products: {ex.Message}", "OK");
+            return;
+        }
+        finally
+        {
+            loaderOverlay.IsVisible = false;
+            activityIndicator.IsRunning = false;
+            await this.ShowPopupAsync(popup);
+        }
     }
 }

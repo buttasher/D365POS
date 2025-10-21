@@ -24,6 +24,8 @@ public partial class PriceCheckPopup : Popup
 
         try
         {
+          
+            // Load data
             loaderOverlay.IsVisible = true;
             await Task.Delay(300);
 
@@ -50,10 +52,10 @@ public partial class PriceCheckPopup : Popup
                         {
                             Spacing = 4,
                             Children =
-                        {
-                            new Label { Text = $"Unit: {item.UnitId}", FontSize = 16 },
-                            new Label { Text = $"Price: {item.UnitPrice:C}", FontSize = 16, TextColor = Colors.DarkGreen }
-                        }
+                            {
+                                new Label { Text = $"Unit: {item.UnitId}", FontSize = 16 },
+                                new Label { Text = $"Price: {item.UnitPrice}", FontSize = 16, TextColor = Colors.DarkGreen }
+                            }
                         }
                     };
                     ResultListLayout.Children.Add(unitFrame);
@@ -69,26 +71,11 @@ public partial class PriceCheckPopup : Popup
                 });
             }
 
-            await PopupFrame.FadeTo(0.9, 100);
-            await Task.WhenAll(
-            PopupFrame.FadeTo(1, 150),
-            AnimatePopupHeight(220, 450, 250) // increased final height
-            );
-
-            ResultFrame.Opacity = 0;
-            await ResultFrame.FadeTo(1, 250, Easing.CubicIn);
         }
         catch (Exception ex)
         {
             loaderOverlay.IsVisible = false;
             await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK");
         }
-    }
-
-    private async Task AnimatePopupHeight(double from, double to, uint duration)
-    {
-        var animation = new Animation(h => PopupFrame.HeightRequest = h, from, to);
-        animation.Commit(PopupFrame, "PopupResize", 16, duration, Easing.CubicInOut);
-        await Task.Delay((int)duration);
     }
 }
