@@ -3,94 +3,94 @@
              x:Class="D365POS.DashboardPage"
              Title="POS Dashboard">
 
-    <Grid Padding="20"
-          ColumnDefinitions="2*,3*"
-          RowDefinitions="*">
+    <!-- Parent Grid for layering content and loader -->
+    <Grid>
 
-        <!-- Left Panel -->
-        <StackLayout Grid.Column="0" Spacing="15" Margin="10,0,50,30">
-            <Label Text="Get Started"
-                   FontSize="20"
-                   FontAttributes="Bold" />
+        <!-- Main Content Grid -->
+        <Grid Padding="20"
+              ColumnDefinitions="2*,3*"
+              RowDefinitions="*">
 
-            <!-- Large Sale Button -->
-            <Button Text="Sale"
-                    BackgroundColor="#A66E43"
-                    FontSize="40"
-                    CornerRadius="8"
-                    HeightRequest="250"
-                    Clicked="OnSaleClicked"/>
+            <!-- Left Panel -->
+            <StackLayout Grid.Column="0" Spacing="15" Margin="10,0,50,30">
+                <Label Text="Get Started"
+                       FontSize="20"
+                       FontAttributes="Bold" />
 
-            <Grid ColumnDefinitions="*,*" RowDefinitions="*" ColumnSpacing="10" Margin="0,30,0,0" HeightRequest="80">
-                <!-- Smaller Buttons -->
-                <Button Grid.Column="0" Text="Price check" BackgroundColor="#A66E43" CornerRadius="8" Clicked="OnPriceCheckClicked"/>
-                <Button Grid.Column="1" Text="Inventory lookup" BackgroundColor="#A66E43" CornerRadius="8"/>
-            </Grid>
+                <!-- Large Sale Button -->
+                <Button Text="Sale"
+                        BackgroundColor="#A66E43"
+                        FontSize="40"
+                        CornerRadius="8"
+                        HeightRequest="250"
+                        Clicked="OnSaleClicked"/>
 
-            <Grid ColumnDefinitions="*,*,*,*" RowDefinitions="*" ColumnSpacing="10" HeightRequest="80">
-                <!-- Smaller Buttons -->
-                <Button Grid.Column="0" Text="Recall&#10;transaction" BackgroundColor="#A66E43" CornerRadius="8"/>
-                <Button Grid.Column="1" Text="Tender&#10;removal" BackgroundColor="#A66E43" CornerRadius="8"/>
-                <Button Grid.Column="2" Text="Show journal" BackgroundColor="#A66E43" CornerRadius="8" Clicked="OnShowJournalClicked"/>
-                <Button Grid.Column="3" Text="Reports" BackgroundColor="#A66E43" CornerRadius="8"/>
-            </Grid>
+                <Grid ColumnDefinitions="*,*" RowDefinitions="*" ColumnSpacing="10" Margin="0,30,0,0" HeightRequest="80">
+                    <Button Grid.Column="0" Text="Price check" BackgroundColor="#A66E43" CornerRadius="8" Clicked="OnPriceCheckClicked"/>
+                    <Button Grid.Column="1" Text="Inventory lookup" BackgroundColor="#A66E43" CornerRadius="8"/>
+                </Grid>
 
+                <Grid ColumnDefinitions="*,*,*,*" RowDefinitions="*" ColumnSpacing="10" HeightRequest="80">
+                    <Button Grid.Column="0" Text="Recall&#10;transaction" BackgroundColor="#A66E43" CornerRadius="8"/>
+                    <Button Grid.Column="1" Text="Tender&#10;removal" BackgroundColor="#A66E43" CornerRadius="8"/>
+                    <Button Grid.Column="2" Text="Show journal" BackgroundColor="#A66E43" CornerRadius="8" Clicked="OnShowJournalClicked"/>
+                    <Button Grid.Column="3" Text="Reports" BackgroundColor="#A66E43" CornerRadius="8"/>
+                </Grid>
+            </StackLayout>
 
-        </StackLayout>
+            <!-- Right Panel -->
+            <StackLayout Grid.Column="1" Spacing="15" Margin="100,0,0,0">
+                <Label Text="Tasks"
+                       FontSize="20"
+                       FontAttributes="Bold" />
 
-        <!-- Right Panel -->
-        <StackLayout Grid.Column="1" Spacing="15" Margin="100,0,0,0">
-            <Label Text="Tasks"
-                   FontSize="20"
-                   FontAttributes="Bold" />
+                <Grid ColumnDefinitions="2*,2*,2*,2*,*"
+                      RowDefinitions="Auto,Auto,Auto,Auto,Auto"
+                      ColumnSpacing="15"
+                      RowSpacing="20">
 
-            <Grid ColumnDefinitions="2*,2*,2*,2*,*"
-                  RowDefinitions="Auto,Auto,Auto,Auto,Auto"
-                  ColumnSpacing="15"
-                  RowSpacing="20">
+                    <!-- Row 1 -->
+                    <Button Grid.Row="0" Grid.Column="0" Text="Open drawer" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
+                    <Button Grid.Row="0" Grid.Column="1" Text="Price check" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
+                    <Button Grid.Row="0" Grid.Column="2" Text="Tender declaration" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
+                    <Button Grid.Row="0" Grid.Column="3" Text="Manage shifts" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
 
-                <!-- Row 1 -->
-                <Button Grid.Row="0" Grid.Column="0" Text="Open drawer" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
-                <Button Grid.Row="0" Grid.Column="1" Text="Price check" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
-                <Button Grid.Row="0" Grid.Column="2" Text="Tender declaration" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
-                <Button Grid.Row="0" Grid.Column="3" Text="Manage shifts" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
+                    <!-- Row 2 -->
+                    <Button Grid.Row="1" Grid.Column="0" Text="Tender removal" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
+                    <Button Grid.Row="1" Grid.Column="1" Text="Blind close shift" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
+                    <Button Grid.Row="1" Grid.Column="2" Text="Suspend shift" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
+                    <Button Grid.Row="1" Grid.Column="3" Text="Close shift" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
 
+                    <!-- Row 3 -->
+                    <Button Grid.Row="2" Grid.Column="0" Text="Print Z" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
+                    <Button Grid.Row="2" Grid.Column="1" Text="Declare start" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
+                    <Button Grid.Row="2" Grid.Column="2" Text="Bank drop" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
+                    <Button Grid.Row="2" Grid.Column="3" Text="Print X" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
 
-                <!-- Row 2 -->
-                <Button Grid.Row="1" Grid.Column="0" Text="Tender removal" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
-                <Button Grid.Row="1" Grid.Column="1" Text="Blind close shift" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
-                <Button Grid.Row="1" Grid.Column="2" Text="Suspend shift" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
-                <Button Grid.Row="1" Grid.Column="3" Text="Close shift" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
+                    <!-- Row 4 -->
+                    <Button Grid.Row="3" Grid.Column="0" Text="Deposit override" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
+                    <Button Grid.Row="3" Grid.Column="1" Text="Recall transaction" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
+                    <Button Grid.Row="3" Grid.Column="2" Text="Activate device" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
+                    <Button Grid.Row="3" Grid.Column="3" Text="Select hardware station" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
 
-                <!-- Row 3 -->
-                <Button Grid.Row="2" Grid.Column="0" Text="Print Z" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
-                <Button Grid.Row="2" Grid.Column="1" Text="Declare start" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
-                <Button Grid.Row="2" Grid.Column="2" Text="Bank drop" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
-                <Button Grid.Row="2" Grid.Column="3" Text="Print X" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
+                </Grid>
+            </StackLayout>
 
-                <!-- Row 4 -->
-                <Button Grid.Row="3" Grid.Column="0" Text="Deposit override" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
-                <Button Grid.Row="3" Grid.Column="1" Text="Recall transaction" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
-                <Button Grid.Row="3" Grid.Column="2" Text="Activate device" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
-                <Button Grid.Row="3" Grid.Column="3" Text="Select hardware station" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
-
-            </Grid>
-        </StackLayout>
-
-        <!-- FULL SCREEN LOADER -->
-        <Grid x:Name="loaderOverlay"
-          IsVisible="False"
-          VerticalOptions="Fill"
-          HorizontalOptions="Fill"
-          Grid.ColumnSpan="2">
-            <ActivityIndicator x:Name="activityIndicator"
-                        Color="#A66E43"
-                        IsRunning="True"
-                        WidthRequest="60"
-                        HeightRequest="60"
-                        VerticalOptions="Center"
-                        HorizontalOptions="Center"/>
         </Grid>
-        
+
+        <!-- FULL SCREEN LOADER ON TOP -->
+        <Grid x:Name="loaderOverlay"
+              IsVisible="False"
+              VerticalOptions="Fill"
+              HorizontalOptions="Fill">
+            <ActivityIndicator x:Name="activityIndicator"
+                               Color="#A66E43"
+                               IsRunning="True"
+                               WidthRequest="60"
+                               HeightRequest="60"
+                               VerticalOptions="Center"
+                               HorizontalOptions="Center"/>
+        </Grid>
+
     </Grid>
 </ContentPage>
