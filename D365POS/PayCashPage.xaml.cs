@@ -18,7 +18,7 @@ namespace D365POS
                 if (decimal.TryParse(value, out var result))
                 {
                     _amountDue = result;
-                    AmountDueLabel.Text = _amountDue.ToString("N2"); // update UI
+                    AmountDueLabel.Text = _amountDue.ToString("N3"); // update UI
                 }
             }
         }
@@ -95,12 +95,15 @@ namespace D365POS
                 string text = button.Text.Replace(",", "");
                 if (decimal.TryParse(text, out decimal payment))
                 {
-                  
-                    decimal newAmountDue = payment - _amountDue;
-                    if (newAmountDue < 0)
+                    // Check if payment is smaller than amount due
+                    if (payment < _amountDue)
                     {
-                        newAmountDue = 0;
-                    } 
+                        await DisplayAlert("Error", "Selected amount cannot be smaller than amount due.", "OK");
+                        return; // stop further execution
+                    }
+
+                    decimal newAmountDue = payment - _amountDue;
+
                     var navParams = new Dictionary<string, object>
                     {
                         { "PaymentAmount", payment },

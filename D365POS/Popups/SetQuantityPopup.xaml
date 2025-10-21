@@ -46,7 +46,7 @@
                   IsVisible="False"
                   VerticalOptions="Fill"
                   HorizontalOptions="Fill">
-                
+
                 <ActivityIndicator x:Name="activityIndicator"
                                    Color="#A66E43"
                                    IsRunning="True"
@@ -57,5 +57,5 @@
             </Grid>
         </Grid>
     </Frame>
-    
+
 </toolkit:Popup>

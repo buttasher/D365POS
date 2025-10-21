@@ -29,7 +29,7 @@
                     <DataTemplate>
                         <Grid Padding="10"
                               ColumnDefinitions="2*,*,*,*,2*,*"
-                              BackgroundColor="{Binding IsSelected, Converter={StaticResource BoolToColorConverter}}">
+                             >
                             <Label Text="{Binding BusinessDate, StringFormat='{0:MM/dd/yyyy hh:mm tt}'}"/>
                             <Label Text="{Binding ShiftStaffId}" Grid.Column="1"/>
                             <Label Text="{Binding TransactionType}" Grid.Column="2"/>

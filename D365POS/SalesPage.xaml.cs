@@ -121,8 +121,10 @@ namespace D365POS
         }
         private void RecalculateTotals()
         {
-            TotalTax = AddedProducts.Sum(p => p.TaxAmount);
-            TotalSubtotal = AddedProducts.Sum(p => p.Subtotal);
+            var activeProducts = AddedProducts.Where(p => !p.IsVoid);
+
+            TotalTax = activeProducts.Sum(p => p.TaxAmount);
+            TotalSubtotal = activeProducts.Sum(p => p.Subtotal);
         }
         private void OnSearchTextChanged(object sender, TextChangedEventArgs e)
         {
@@ -163,12 +165,13 @@ namespace D365POS
         }
         private void AddProductToTable(StoreProducts product)
         {
-            var existing = AddedProducts.FirstOrDefault(p => p.ItemId == product.ItemId);
+            // Find an existing **non-voided** item
+            var existing = AddedProducts.FirstOrDefault(p => p.ItemId == product.ItemId && !p.IsVoid);
 
             // Get the unit price from StoreProductsUnit table
             var unit = _allUnits.FirstOrDefault(u => u.ItemId == product.ItemId);
             decimal unitPrice = unit?.UnitPrice ?? 0;
-            decimal priceIncludeTax = unit?.PriceIncludeTax ?? 0;   
+            decimal priceIncludeTax = unit?.PriceIncludeTax ?? 0;
 
             if (existing != null)
             {
@@ -181,41 +184,16 @@ namespace D365POS
                 product.Quantity = 1;
                 product.UnitPrice = unitPrice; // set unit price for new product
                 product.PriceIncludeTax = priceIncludeTax;
+                product.IsVoid = false;        // ensure new items are not voided
                 AddedProducts.Add(product);
             }
+
             RecalculateTotals();
         }
         private async void OnPayCashClicked(object sender, EventArgs e)
         {
             var totalAmount = AddedProducts.Sum(p => p.Total);
             await Shell.Current.GoToAsync($"{nameof(PayCashPage)}?AmountDue={TotalSubtotal}");
-        }
-        private async void OnPriceCheckClicked(object sender, EventArgs e)
-        {
-            loaderOverlay.IsVisible = true;
-            activityIndicator.IsRunning = true;
-
-            var productPriceSyncService = new ProductPriceSyncService();
-            var popup = new PriceCheckPopup();
-
-            var storeId = Preferences.Get("Store", string.Empty);
-            var company = Preferences.Get("Company", string.Empty);
-
-            try
-            {
-                await productPriceSyncService.SyncProductsPricesAsync(company, storeId);
-            }
-            catch (Exception ex)
-            {
-                await DisplayAlert("Error", $"Failed to sync products: {ex.Message}", "OK");
-                return;
-            }
-            finally
-            {
-                loaderOverlay.IsVisible = false;
-                activityIndicator.IsRunning = false;
-                await this.ShowPopupAsync(popup);
-            }
         }
         private async void OnPayQuickCashClicked(object sender, EventArgs e)
         {
@@ -228,9 +206,6 @@ namespace D365POS
                 await DisplayAlert("No Selection", "Please select a product first.", "OK");
                 return;
             }
-
-            loaderOverlay.IsVisible = true;
-            activityIndicator.IsRunning = true;
 
             try
             {
@@ -251,11 +226,7 @@ namespace D365POS
             {
                 await DisplayAlert("Error", $"Failed to open popup: {ex.Message}", "OK");
             }
-            finally
-            {
-                loaderOverlay.IsVisible = false;
-                activityIndicator.IsRunning = false;
-            }
+            
         }
         private void PrintReceipt(string storeId, string cashier, string receiptId, decimal total, decimal totalTax, string payment)
         {
@@ -365,14 +336,78 @@ namespace D365POS
         {
             await RecordSaleAsync("Card");
         }
-        private async void OnVoidTransactionClicked(object sender, EventArgs e)
+        private async void OnVoidProductClicked(object sender, EventArgs e)
         {
-         
-            bool confirm = await DisplayAlert("Confirm", "Are you sure you want to void this transaction?", "Yes", "No");
+            if (ProductsList.SelectedItem is not StoreProducts selectedProduct)
+            {
+                await DisplayAlert("No Selection", "Please select a product first.", "OK");
+                return;
+            }
+
+            bool confirm = await DisplayAlert("Confirm", $"Are you sure you want to void {selectedProduct.Description}?", "Yes", "No");
             if (!confirm)
                 return;
 
-            loaderOverlay.IsVisible = true;
+            try
+            {
+                var storeId = Preferences.Get("Store", string.Empty);
+                var company = Preferences.Get("Company", string.Empty);
+                var cashier = Preferences.Get("UserId", string.Empty);
+
+                // Create a void transaction header (optional: or reuse the main transaction ID)
+                var header = new POSRetailTransactionTable
+                {
+                    StoreId = storeId,
+                    TerminalId = "POS1",
+                    ShiftId = "Morning",
+                    ShiftStaffId = cashier,
+                    ReceiptId = $"VOID-{DateTime.Now:yyyyMMddHHmmss}",
+                    BusinessDate = DateTime.Now,
+                    Currency = "AED",
+                    Total = selectedProduct.Total, // only this line
+                    TransactionType = POSRetailTransactionTable.TransactionTypeEnum.Void
+                };
+
+                await _db.CreateTransactionTable(header);
+
+                // Save only the selected product line
+                var line = new POSRetailTransactionSalesTrans
+                {
+                    TransactionId = header.TransactionId,
+                    LineNum = 1,
+                    ItemId = selectedProduct.ItemId,
+                    Qty = selectedProduct.Quantity,
+                    UnitId = selectedProduct.UnitId,
+                    UnitPrice = selectedProduct.UnitPrice,
+                    NetAmount = selectedProduct.Subtotal,
+                    TaxAmount = selectedProduct.TaxAmount,
+                    GrossAmount = selectedProduct.Total,
+                    DiscAmount = 0,
+                    DiscAmountWithoutTax = 0
+                };
+                await _db.CreateTransactionSalesTrans(line);
+
+                selectedProduct.IsVoid = true;
+
+                // Refresh the CollectionView
+                ProductsList.ItemsSource = null;
+                ProductsList.ItemsSource = AddedProducts;
+                TotalTax = 0;
+                TotalSubtotal = 0;
+
+                await DisplayAlert("Success", $"{selectedProduct.Description} has been voided successfully!", "OK");
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Error", $"Failed to void product: {ex.Message}", "OK");
+            }
+        }
+        private async void OnVoidTransactionClicked(object sender, EventArgs e)
+        {
+
+            bool confirm = await DisplayAlert("Confirm", "Are you sure you want to void this transaction?", "Yes", "No");
+            if (!confirm)
+                return;
 
             try
             {
@@ -430,20 +465,19 @@ namespace D365POS
             {
                 await DisplayAlert("Error", $"Failed to void transaction: {ex.Message}", "OK");
             }
-            finally
-            {
-                loaderOverlay.IsVisible = false;
-            }
+           
         }
+
         private async Task RecordSaleAsync(string paymentMethod)
         {
-            if (AddedProducts == null || !AddedProducts.Any())
+            // Filter only non-void products
+            var activeProducts = AddedProducts.Where(p => !p.IsVoid).ToList();
+
+            if (!activeProducts.Any())
             {
-                await DisplayAlert("No items", "Please add at least one product to record a sale.", "OK");
+                await DisplayAlert("No items", "There are no non-void items to record.", "OK");
                 return;
             }
-
-            loaderOverlay.IsVisible = true;
 
             try
             {
@@ -454,11 +488,11 @@ namespace D365POS
 
                 decimal totalAmount = 0m;
                 decimal totalTax = 0m;
-                decimal netAmount = 0m;
-                // Calculate totals properly considering tax-included or not
-                foreach (var p in AddedProducts)
+
+                // Calculate totals considering tax
+                foreach (var p in activeProducts)
                 {
-                    decimal taxAmount, grossAmount;
+                    decimal taxAmount, netAmount, grossAmount;
 
                     if (p.PriceIncludeTax > 0) // Price already includes tax
                     {
@@ -466,7 +500,7 @@ namespace D365POS
                         netAmount = Math.Round(p.Total / (1 + p.TaxFactor), 4);
                         grossAmount = p.Total;
                     }
-                    else // Price does NOT include tax
+                    else // Price does not include tax
                     {
                         taxAmount = Math.Round(p.Total * p.TaxFactor, 4);
                         netAmount = p.Total;
@@ -475,10 +509,9 @@ namespace D365POS
 
                     totalAmount += grossAmount;
                     totalTax += taxAmount;
-                    netAmount += netAmount;
                 }
 
-                // Create sale DTO
+                // Create sale DTO using only active products
                 var saleItem = new RecordSalesService.SaleItemDto
                 {
                     StoreId = storeId,
@@ -488,26 +521,26 @@ namespace D365POS
                     ShiftId = "Morning",
                     ReceiptId = $"INV-{DateTime.Now:yyyyMMddHHmmss}",
                     Payments = new List<RecordSalesService.PaymentDto>
-                    {
-                        new RecordSalesService.PaymentDto
-                        {
-                            PaymentDateTime = DateTime.Now,
-                            PaymentMethod = paymentMethod,
-                            PaymentType = "",
-                            Currency = "AED",
-                            PaymentAmount = totalAmount.ToString("N3")
-                        }
-                    },
+            {
+                new RecordSalesService.PaymentDto
+                {
+                    PaymentDateTime = DateTime.Now,
+                    PaymentMethod = paymentMethod,
+                    PaymentType = "",
+                    Currency = "AED",
+                    PaymentAmount = totalAmount.ToString("N3")
+                }
+            },
                     Taxes = new List<RecordSalesService.TaxDto>
-                    {
-                        new RecordSalesService.TaxDto
-                        {
-                            TaxName = "VAT",
-                            TaxRate = (double)(AddedProducts.FirstOrDefault()?.TaxFactor ?? 0.05m),
-                            TaxValue = totalTax.ToString("F2")
-                        }
-                    },
-                    Items = AddedProducts.Select(p => new RecordSalesService.ItemDto
+            {
+                new RecordSalesService.TaxDto
+                {
+                    TaxName = "VAT",
+                    TaxRate = (double)(activeProducts.FirstOrDefault()?.TaxFactor ?? 0.05m),
+                    TaxValue = totalTax.ToString("F2")
+                }
+            },
+                    Items = activeProducts.Select(p => new RecordSalesService.ItemDto
                     {
                         ItemId = p.ItemId,
                         UnitId = p.UnitId,
@@ -528,7 +561,7 @@ namespace D365POS
 
                 if (success)
                 {
-                    // Save header with correct total
+                    // Save header
                     var header = new POSRetailTransactionTable
                     {
                         StoreId = storeId,
@@ -538,13 +571,13 @@ namespace D365POS
                         ReceiptId = saleItem.ReceiptId,
                         BusinessDate = DateTime.Now,
                         Currency = saleItem.Payments.FirstOrDefault()?.Currency ?? "AED",
-                        Total = totalAmount // REAL total including tax
+                        Total = totalAmount
                     };
                     await _db.CreateTransactionTable(header);
 
-                    // Save each line
+                    // Save each line (only active products)
                     int lineNum = 1;
-                    foreach (var p in AddedProducts)
+                    foreach (var p in activeProducts)
                     {
                         var line = new POSRetailTransactionSalesTrans
                         {
@@ -554,9 +587,9 @@ namespace D365POS
                             Qty = p.Quantity,
                             UnitId = p.UnitId,
                             UnitPrice = p.UnitPrice,
-                            NetAmount = netAmount,
+                            NetAmount = p.Subtotal,
                             TaxAmount = p.TaxAmount,
-                            GrossAmount = p.Subtotal,
+                            GrossAmount = p.Total,
                             DiscAmount = 0,
                             DiscAmountWithoutTax = 0
                         };
@@ -606,11 +639,8 @@ namespace D365POS
             {
                 await DisplayAlert("Error", ex.Message, "OK");
             }
-            finally
-            {
-                loaderOverlay.IsVisible = false;
-            }
         }
+
 
         private async Task<bool> ShowConfirmationPopup(decimal paymentAmount, decimal newAmountDue)
         {
@@ -627,5 +657,6 @@ namespace D365POS
                 return false;
             }
         }
+
     }
 }

@@ -10,6 +10,7 @@
            HasShadow="True"
            Padding="25"
            VerticalOptions="Center"
+           WidthRequest="500"  
            HorizontalOptions="Center">
 
         <VerticalStackLayout Spacing="15"

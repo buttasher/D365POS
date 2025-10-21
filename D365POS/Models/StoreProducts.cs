@@ -1,10 +1,11 @@
 ﻿using SQLite;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Runtime.CompilerServices;
 
 namespace D365POS.Models
 {
-    [Table("StoreProducts")]
+    [SQLite.Table("StoreProducts")]
     public class StoreProducts : INotifyPropertyChanged
     {
         [PrimaryKey, AutoIncrement]
@@ -20,6 +21,8 @@ namespace D365POS.Models
         public string ItemSalesTaxGroup { get; set; }
         public decimal TaxFactor {get; set; }
 
+        [Ignore]
+        public bool IsVoid { get; set; } = false;
         [Ignore]
         public decimal PriceIncludeTax { get; set; }
 
