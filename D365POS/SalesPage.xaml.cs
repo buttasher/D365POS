@@ -5,7 +5,9 @@ using D365POS.Popups;
 using D365POS.Services;
 using System.Collections.ObjectModel;
 using System.Data;
-
+using PdfSharpCore.Drawing;
+using PdfSharpCore.Pdf;
+using System.IO;
 
 
 namespace D365POS
@@ -34,6 +36,7 @@ namespace D365POS
                 OnPropertyChanged(nameof(IsSearchListVisible));
             }
         }
+   
         private decimal _paymentAmount;
         public decimal PaymentAmount
         {
@@ -41,7 +44,7 @@ namespace D365POS
             set
             {
                 _paymentAmount = value;
-                PaymentLabel.Text = value.ToString("N4");
+                PaymentLabel.Text = value.ToString("F3");
 
             }
         }
@@ -52,7 +55,7 @@ namespace D365POS
             set
             {
                 _newAmountDue = value;
-                AmountDueLabel.Text = value.ToString("N4");
+                AmountDueLabel.Text = value.ToString("F3");
                 MainThread.BeginInvokeOnMainThread(async () =>
                 {
                     bool confirmed = await ShowConfirmationPopup(_paymentAmount, _newAmountDue);
@@ -228,15 +231,15 @@ namespace D365POS
             }
             
         }
-        private void PrintReceipt(string storeId, string cashier, string receiptId, decimal total, decimal totalTax, string payment)
+        private void PrintReceipt(string storeId, string cashier, string receiptId, decimal total, decimal totalTax, string payment, decimal totalWithoutVAT)
         {
             string printerName = "EPSON TM-T82 Receipt";
             string receipt = "";
 
             receipt += "\x1B\x40"; // ESC @ Initialize printer
             receipt += AlignText("Tax Invoice", 48, "center") + "\n";
-            receipt += AlignText("AL Douri Signature Specialty Food Store L.L.C", 48, "center") + "\n";
-            receipt += AlignText("Creek Harbour", 48, "center") + "\n\n";
+            receipt += AlignText("YASIR DOURI FOODSTUFF TRADING COMPANY L.L.C", 48, "center") + "\n";
+            receipt += AlignText("Oman", 48, "center") + "\n\n";
 
             // Widths
             int itemWidth = 20;
@@ -260,8 +263,9 @@ namespace D365POS
 
             receipt += "-----------------------------------------------\n";
 
+            var activeProducts = AddedProducts.Where(p => !p.IsVoid).ToList();
             // Items
-            foreach (var p in AddedProducts)
+            foreach (var p in activeProducts)
             {
                 var wrappedNameLines = WrapText(p.Description, itemWidth).ToList();
                 for (int i = 0; i < wrappedNameLines.Count; i++)
@@ -278,15 +282,15 @@ namespace D365POS
             receipt += "-----------------------------------------------\n";
 
             // Totals
-            decimal totalExcludingVAT = TotalSubtotal;
+            decimal totalExcludingVAT = totalWithoutVAT;
             decimal vatAmount = totalTax;
             decimal totalPayable = total;
             decimal paidAmount = totalPayable;
 
-            receipt += AlignText($"Total Excluding VAT: {totalExcludingVAT:F2}", receiptWidth, "left") + "\n";
-            receipt += AlignText($"VAT 5% Included: {vatAmount:F2}", receiptWidth, "left") + "\n";
-            receipt += AlignText($"Total Payable: {totalPayable:F2}", receiptWidth, "left") + "\n";
-            receipt += AlignText($"Paid Amount: {paidAmount:F2}", receiptWidth, "left") + "\n";
+            receipt += AlignText($"Total Excluding VAT: {totalExcludingVAT:F3}", receiptWidth, "left") + "\n";
+            receipt += AlignText($"VAT 5% Included: {vatAmount:F3}", receiptWidth, "left") + "\n";
+            receipt += AlignText($"Total Payable: {totalPayable:F3}", receiptWidth, "left") + "\n";
+            receipt += AlignText($"Paid Amount: {paidAmount:F3}", receiptWidth, "left") + "\n";
             receipt += AlignText($"Payment Method: {payment}", receiptWidth, "left") + "\n\n";
 
             // Footer
@@ -298,8 +302,61 @@ namespace D365POS
 
             receipt += "\x1D\x56\x42\x03"; // GS V B 3 Cut paper
 
+            //RawPrinterHelper.SendStringToPrinter(printerName, receipt);
+
+            // 🔹 Step 1: Generate PDF version
+            string pdfPath = GenerateReceiptPDF(receiptId, receipt);
+
+            // 🔹 Step 2: Print receipt using ESC/POS
             RawPrinterHelper.SendStringToPrinter(printerName, receipt);
+
+            // 🔹 Optional: open the PDF (for debugging or preview)
+            try
+            {
+                Launcher.OpenAsync(new OpenFileRequest
+                {
+                    File = new ReadOnlyFile(pdfPath)
+                });
+            }
+            catch { }
         }
+        private string GenerateReceiptPDF(string receiptId, string content)
+        {
+            string folderPath = FileSystem.AppDataDirectory;
+            string filePath = Path.Combine(folderPath, $"Receipt_{receiptId}.pdf");
+
+            using (PdfDocument document = new PdfDocument())
+            {
+                var page = document.AddPage();
+                XGraphics gfx = XGraphics.FromPdfPage(page);
+                XFont font = new XFont("Courier New", 10, XFontStyle.Regular);
+
+                double y = 20;
+                double lineHeight = 14;
+
+                foreach (string line in content.Split('\n'))
+                {
+                    gfx.DrawString(line, font, XBrushes.Black, new XRect(20, y, page.Width - 40, lineHeight), XStringFormats.TopLeft);
+                    y += lineHeight;
+
+                    // Add new page if too long
+                    if (y > page.Height - 40)
+                    {
+                        page = document.AddPage();
+                        gfx = XGraphics.FromPdfPage(page);
+                        y = 20;
+                    }
+                }
+
+                using (var stream = File.Create(filePath))
+                {
+                    document.Save(stream, false);
+                }
+            }
+
+            return filePath;
+        }
+
         private string AlignText(string text, int width, string align = "left", int leftMargin = 2)
         {
             text = text ?? "";
@@ -354,7 +411,7 @@ namespace D365POS
                 var company = Preferences.Get("Company", string.Empty);
                 var cashier = Preferences.Get("UserId", string.Empty);
 
-                // Create a void transaction header (optional: or reuse the main transaction ID)
+                // Create a void transaction header for this line
                 var header = new POSRetailTransactionTable
                 {
                     StoreId = storeId,
@@ -364,13 +421,13 @@ namespace D365POS
                     ReceiptId = $"VOID-{DateTime.Now:yyyyMMddHHmmss}",
                     BusinessDate = DateTime.Now,
                     Currency = "AED",
-                    Total = selectedProduct.Total, // only this line
+                    Total = selectedProduct.Total,
                     TransactionType = POSRetailTransactionTable.TransactionTypeEnum.Void
                 };
 
                 await _db.CreateTransactionTable(header);
 
-                // Save only the selected product line
+                // Save only the selected product line (optional: keep zero amounts)
                 var line = new POSRetailTransactionSalesTrans
                 {
                     TransactionId = header.TransactionId,
@@ -379,21 +436,24 @@ namespace D365POS
                     Qty = selectedProduct.Quantity,
                     UnitId = selectedProduct.UnitId,
                     UnitPrice = selectedProduct.UnitPrice,
-                    NetAmount = selectedProduct.Subtotal,
-                    TaxAmount = selectedProduct.TaxAmount,
-                    GrossAmount = selectedProduct.Total,
+                    NetAmount = 0,
+                    TaxAmount = 0,
+                    GrossAmount = 0,
                     DiscAmount = 0,
                     DiscAmountWithoutTax = 0
                 };
                 await _db.CreateTransactionSalesTrans(line);
 
+                // Mark as void
                 selectedProduct.IsVoid = true;
+
+                // Subtract this product from totals instead of resetting all
+                TotalSubtotal -= selectedProduct.Subtotal;
+                TotalTax -= selectedProduct.TaxAmount;
 
                 // Refresh the CollectionView
                 ProductsList.ItemsSource = null;
                 ProductsList.ItemsSource = AddedProducts;
-                TotalTax = 0;
-                TotalSubtotal = 0;
 
                 await DisplayAlert("Success", $"{selectedProduct.Description} has been voided successfully!", "OK");
             }
@@ -443,9 +503,9 @@ namespace D365POS
                         Qty = p.Quantity,
                         UnitId = p.UnitId,
                         UnitPrice = p.UnitPrice,
-                        NetAmount = p.Subtotal,
-                        TaxAmount = p.TaxAmount,
-                        GrossAmount = p.Total,
+                        NetAmount = 0,
+                        TaxAmount = 0,
+                        GrossAmount = 0,
                         DiscAmount = 0,
                         DiscAmountWithoutTax = 0
                     };
@@ -470,6 +530,8 @@ namespace D365POS
 
         private async Task RecordSaleAsync(string paymentMethod)
         {
+            loaderOverlay.IsVisible = true;
+            activityIndicator.IsRunning = true;
             // Filter only non-void products
             var activeProducts = AddedProducts.Where(p => !p.IsVoid).ToList();
 
@@ -488,6 +550,7 @@ namespace D365POS
 
                 decimal totalAmount = 0m;
                 decimal totalTax = 0m;
+                decimal totalExcludingVAT = 0m;
 
                 // Calculate totals considering tax
                 foreach (var p in activeProducts)
@@ -506,7 +569,7 @@ namespace D365POS
                         netAmount = p.Total;
                         grossAmount = p.Total + taxAmount;
                     }
-
+                    totalExcludingVAT += netAmount;
                     totalAmount += grossAmount;
                     totalTax += taxAmount;
                 }
@@ -521,25 +584,25 @@ namespace D365POS
                     ShiftId = "Morning",
                     ReceiptId = $"INV-{DateTime.Now:yyyyMMddHHmmss}",
                     Payments = new List<RecordSalesService.PaymentDto>
-            {
-                new RecordSalesService.PaymentDto
-                {
-                    PaymentDateTime = DateTime.Now,
-                    PaymentMethod = paymentMethod,
-                    PaymentType = "",
-                    Currency = "AED",
-                    PaymentAmount = totalAmount.ToString("N3")
-                }
-            },
+                    {
+                        new RecordSalesService.PaymentDto
+                        {
+                            PaymentDateTime = DateTime.Now,
+                            PaymentMethod = paymentMethod,
+                            PaymentType = "",
+                            Currency = "AED",
+                            PaymentAmount = totalAmount.ToString("F3")
+                        }
+                    },
                     Taxes = new List<RecordSalesService.TaxDto>
-            {
-                new RecordSalesService.TaxDto
-                {
-                    TaxName = "VAT",
-                    TaxRate = (double)(activeProducts.FirstOrDefault()?.TaxFactor ?? 0.05m),
-                    TaxValue = totalTax.ToString("F2")
-                }
-            },
+                    {
+                        new RecordSalesService.TaxDto
+                        {
+                            TaxName = "VAT",
+                            TaxRate = (double)(activeProducts.FirstOrDefault()?.TaxFactor ?? 0.05m),
+                            TaxValue = totalTax.ToString("F3")
+                        }
+                    },
                     Items = activeProducts.Select(p => new RecordSalesService.ItemDto
                     {
                         ItemId = p.ItemId,
@@ -587,9 +650,9 @@ namespace D365POS
                             Qty = p.Quantity,
                             UnitId = p.UnitId,
                             UnitPrice = p.UnitPrice,
-                            NetAmount = p.Subtotal,
+                            NetAmount = p.UnitPrice,
                             TaxAmount = p.TaxAmount,
-                            GrossAmount = p.Total,
+                            GrossAmount = p.Subtotal,
                             DiscAmount = 0,
                             DiscAmountWithoutTax = 0
                         };
@@ -621,14 +684,10 @@ namespace D365POS
                     await DisplayAlert("Success", $"Sale recorded successfully via {paymentMethod}!", "OK");
 
                     // Print receipt
-                    PrintReceipt(storeId, cashier, saleItem.ReceiptId, totalAmount, totalTax, paymentMethodId);
+                    PrintReceipt(storeId, cashier, saleItem.ReceiptId, totalAmount, totalTax, paymentMethodId, totalExcludingVAT);
 
                     // Reset UI
                     AddedProducts.Clear();
-                    ProductsList.ItemsSource = null;
-                    ProductsList.ItemsSource = AddedProducts;
-                    PaymentLabel.Text = "0.0000";
-                    AmountDueLabel.Text = "0.0000";
                 }
                 else
                 {
@@ -638,6 +697,11 @@ namespace D365POS
             catch (Exception ex)
             {
                 await DisplayAlert("Error", ex.Message, "OK");
+            }
+            finally
+            {
+                loaderOverlay.IsVisible = false;
+                activityIndicator.IsRunning = false;
             }
         }
 

@@ -105,8 +105,8 @@
                         <DataTemplate>
                             <Grid Padding="10" ColumnDefinitions="*,*,*">
                                 <Label Text="{Binding Col1}" Grid.Column="0"/>
-                                <Label Text="{Binding Col2}" Grid.Column="1" HorizontalTextAlignment="Center"/>
-                                <Label Text="{Binding Col3}" Grid.Column="2" HorizontalTextAlignment="End"/>
+                                <Label Text="{Binding Col2, StringFormat='{0:N3}'}" Grid.Column="1" HorizontalTextAlignment="Center"/>
+                                <Label Text="{Binding Col3, StringFormat='{0:N3}'}" Grid.Column="2" HorizontalTextAlignment="End"/>
                             </Grid>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
@@ -141,6 +141,21 @@
                        HorizontalTextAlignment="End"
                        VerticalOptions="Center"/>
             </Grid>
+        </Grid>
+        
+        <!-- FULL SCREEN LOADER -->
+        <Grid x:Name="loaderOverlay"
+        IsVisible="False"
+        VerticalOptions="Fill"
+        HorizontalOptions="Fill"
+        Grid.ColumnSpan="2">
+            <ActivityIndicator x:Name="activityIndicator"
+                  Color="black"
+                  IsRunning="True"
+                  WidthRequest="60"
+                  HeightRequest="60"
+                  VerticalOptions="Center"
+                  HorizontalOptions="Center"/>
         </Grid>
     </Grid>
 </ContentPage>

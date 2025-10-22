@@ -88,7 +88,7 @@ public partial class ShowJournalPage : ContentPage
             var taxTrans = await _db.GetListAsync<POSRetailTransactionTaxTrans>(
                 x => x.TransactionId == _selectedTransactionId);
 
-            Subtotal = lines.Sum(l => l.NetAmount);
+            Subtotal = lines.Sum(l => l.NetAmount * l.Qty);
             Tax = taxTrans.Sum(t => t.TaxAmount);
             Total = lines.Sum(l => l.GrossAmount);
         }
@@ -142,7 +142,7 @@ public partial class ShowJournalPage : ContentPage
         {
             Col1 = l.ItemId,
             Col2 = l.Qty,
-            Col3 = l.GrossAmount.ToString("N3")
+            Col3 = l.NetAmount
         }).ToList();
     }
 

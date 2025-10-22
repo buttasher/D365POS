@@ -80,16 +80,17 @@
 
         <!-- FULL SCREEN LOADER ON TOP -->
         <Grid x:Name="loaderOverlay"
+              Grid.ZIndex="1000"
               IsVisible="False"
               VerticalOptions="Fill"
               HorizontalOptions="Fill">
             <ActivityIndicator x:Name="activityIndicator"
-                               Color="#A66E43"
-                               IsRunning="True"
-                               WidthRequest="60"
-                               HeightRequest="60"
-                               VerticalOptions="Center"
-                               HorizontalOptions="Center"/>
+                           Color="black"
+                           IsRunning="True"
+                           WidthRequest="60"
+                           HeightRequest="60"
+                           VerticalOptions="Center"
+                           HorizontalOptions="Center"/>
         </Grid>
 
     </Grid>
