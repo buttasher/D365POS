@@ -18,18 +18,17 @@
                     <Grid Padding="10"
                           ColumnDefinitions="2*,*,*,*,2*,*"
                           BackgroundColor="#A66E43">
-                        <Label Text="BUSINESS DATE" FontAttributes="Bold"/>
-                        <Label Text="STAFF ID" Grid.Column="1" FontAttributes="Bold"/>
-                        <Label Text="TRANSACTION TYPE" Grid.Column="2" FontAttributes="Bold"/>
-                        <Label Text="TRANSACTION ID" Grid.Column="3" FontAttributes="Bold"/>
-                        <Label Text="TOTAL" Grid.Column="4" FontAttributes="Bold"/>
+                        <Label Text="Business Date" FontAttributes="Bold"/>
+                        <Label Text="Staff Id" Grid.Column="1" FontAttributes="Bold"/>
+                        <Label Text="Transaction Type" Grid.Column="2" FontAttributes="Bold"/>
+                        <Label Text="Receipt Id" Grid.Column="3" FontAttributes="Bold"/>
+                        <Label Text="Total" Grid.Column="4" FontAttributes="Bold"/>
                     </Grid>
                 </CollectionView.Header>
                 <CollectionView.ItemTemplate>
                     <DataTemplate>
                         <Grid Padding="10"
-                              ColumnDefinitions="2*,*,*,*,2*,*"
-                             >
+                              ColumnDefinitions="2*,*,*,*,2*,*">
                             <Label Text="{Binding BusinessDate, StringFormat='{0:MM/dd/yyyy hh:mm tt}'}"/>
                             <Label Text="{Binding ShiftStaffId}" Grid.Column="1"/>
                             <Label Text="{Binding TransactionType}" Grid.Column="2"/>
@@ -145,17 +144,17 @@
         
         <!-- FULL SCREEN LOADER -->
         <Grid x:Name="loaderOverlay"
-        IsVisible="False"
-        VerticalOptions="Fill"
-        HorizontalOptions="Fill"
-        Grid.ColumnSpan="2">
-            <ActivityIndicator x:Name="activityIndicator"
-                  Color="black"
-                  IsRunning="True"
-                  WidthRequest="60"
-                  HeightRequest="60"
-                  VerticalOptions="Center"
-                  HorizontalOptions="Center"/>
+              IsVisible="False"
+              VerticalOptions="Fill"
+              HorizontalOptions="Fill"
+              Grid.ColumnSpan="2">
+                <ActivityIndicator x:Name="activityIndicator"
+                                  Color="black"
+                                  IsRunning="True"
+                                  WidthRequest="60"
+                                  HeightRequest="60"
+                                  VerticalOptions="Center"
+                                  HorizontalOptions="Center"/>
         </Grid>
     </Grid>
 </ContentPage>

@@ -9,27 +9,27 @@ namespace D365POS.Services
         private readonly AuthService _authService = new AuthService();
         private readonly HttpClient _client = new HttpClient();
 
-        private readonly string _url = "https://tbd365deve8cbf0eb94119fe1devaos.cloudax.uae.dynamics.com/api/services/TBInventoryServices/TBPOSOperationService/getActiveProducts";
+        private readonly string _url = "https://aduat.sandbox.operations.uae.dynamics.com/api/services/TBInventoryServices/TBPOSOperationService/getActiveProducts";
         public async Task<List<ActiveProductsResponse>?> GetActiveProductsAsync(string company, string storeId, CancellationToken token = default)
         {
-            // Step 1: Get access token
-            var accessToken = await _authService.GetAccessTokenAsync();
-
-            // Step 2: Build payload
-            var payload = new ActiveProductsRequest
-            {
-                company = company,
-                storeId = storeId,
-            };
-
-            var json = JsonSerializer.Serialize(payload);
-            var request = new HttpRequestMessage(HttpMethod.Post, _url);
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-            request.Content = new StringContent(json, Encoding.UTF8, "application/json");
-
-            // Step 3: Send request
+          
             try
             {
+                // Step 1: Get access token
+                var accessToken = await _authService.GetAccessTokenAsync();
+
+                // Step 2: Build payload
+                var payload = new ActiveProductsRequest
+                {
+                    company = company,
+                    storeId = storeId,
+                };
+
+                var json = JsonSerializer.Serialize(payload);
+                var request = new HttpRequestMessage(HttpMethod.Post, _url);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+                request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
                 using var cts = CancellationTokenSource.CreateLinkedTokenSource(token);
                 cts.CancelAfter(TimeSpan.FromSeconds(15));
 

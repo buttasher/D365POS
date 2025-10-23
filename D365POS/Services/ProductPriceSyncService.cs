@@ -1,4 +1,5 @@
 ﻿using D365POS.Models;
+using System.Diagnostics;
 
 namespace D365POS.Services
 {
@@ -9,26 +10,37 @@ namespace D365POS.Services
 
         public async Task SyncProductsPricesAsync(string company, string storeId)
         {
-            // 1. Fetch products from API
-            var apiProducts = await _apiService.GetActiveProductPricesAsync(company, storeId);
-
-            if (apiProducts == null || apiProducts.Count == 0)
-                return;
-
-            // 2. Clear existing products from local DB
-            await _dbService.DeleteAllProductsUnit();
-
-            // 3. Map API response to StoreProducts
-            var storeProductPrices = apiProducts.Select(p => new StoreProductsUnit
+            try
             {
-                ItemId = p.ItemId,
-                UnitId = p.UnitId,
-                UnitPrice = p.UnitPrice,
-                PriceIncludeTax = p.PriceIncludeTax,
-            }).ToList();
+                // 1. Fetch products from API
+                var apiProducts = await _apiService.GetActiveProductPricesAsync(company, storeId);
 
-            // 4. Save to local SQLite
-            await _dbService.InsertProductsUnit(storeProductPrices);
+                if (apiProducts == null || apiProducts.Count == 0)
+                {
+                    Debug.WriteLine("No product prices received from API.");
+                    return;
+                }
+
+                // 2. Clear existing product prices from local DB
+                await _dbService.DeleteAllProductsUnit();
+
+                // 3. Map API response to StoreProductsUnit
+                var storeProductPrices = apiProducts.Select(p => new StoreProductsUnit
+                {
+                    ItemId = p.ItemId,
+                    UnitId = p.UnitId,
+                    UnitPrice = p.UnitPrice,
+                    PriceIncludeTax = p.PriceIncludeTax,
+                }).ToList();
+
+                // 4. Save to local SQLite
+                await _dbService.InsertProductsUnit(storeProductPrices);
+
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Unexpected error during product price sync", ex);
+            }
         }
     }
 }

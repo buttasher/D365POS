@@ -129,10 +129,35 @@ namespace D365POS
             TotalTax = activeProducts.Sum(p => p.TaxAmount);
             TotalSubtotal = activeProducts.Sum(p => p.Subtotal);
         }
-        private void OnSearchTextChanged(object sender, TextChangedEventArgs e)
+        private async void OnSearchTextChanged(object sender, TextChangedEventArgs e)
         {
-            ApplyFilter(e.NewTextValue);
-            IsSearchListVisible = !string.IsNullOrWhiteSpace(e.NewTextValue) && FilteredProducts.Any();
+            string newText = e.NewTextValue?.Trim();
+
+            if (string.IsNullOrWhiteSpace(newText))
+            {
+                IsSearchListVisible = false;
+                return;
+            }
+
+            // Apply filter for UI display
+            ApplyFilter(newText);
+
+            // If only ONE product matches — it’s a direct barcode scan
+            if (FilteredProducts.Count == 1)
+            {
+                var product = FilteredProducts.First();
+                AddProductToTable(product);
+
+                // Hide suggestions and clear entry
+                IsSearchListVisible = false;
+                BarcodeEntry.Text = string.Empty;
+                BarcodeEntry.Focus();
+            }
+            else
+            {
+                // Show suggestion overlay for manual selection
+                IsSearchListVisible = FilteredProducts.Any();
+            }
         }
 
         private void ApplyFilter(string keyword)
@@ -160,7 +185,7 @@ namespace D365POS
                 IsSearchListVisible = false;
 
                 // Clear search bar but keep visible
-                ProductSearchBar.Text = string.Empty;
+                BarcodeEntry.Text = string.Empty;
 
                 // Deselect item
                 SearchResultsList.SelectedItem = null;
@@ -302,15 +327,11 @@ namespace D365POS
 
             receipt += "\x1D\x56\x42\x03"; // GS V B 3 Cut paper
 
-            //RawPrinterHelper.SendStringToPrinter(printerName, receipt);
-
-            // 🔹 Step 1: Generate PDF version
+          
             string pdfPath = GenerateReceiptPDF(receiptId, receipt);
 
-            // 🔹 Step 2: Print receipt using ESC/POS
             RawPrinterHelper.SendStringToPrinter(printerName, receipt);
 
-            // 🔹 Optional: open the PDF (for debugging or preview)
             try
             {
                 Launcher.OpenAsync(new OpenFileRequest
@@ -319,6 +340,17 @@ namespace D365POS
                 });
             }
             catch { }
+            // 🔹 Step 4: Delete the PDF automatically after short delay
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await Task.Delay(5000); // wait 5 seconds before deleting
+                    if (File.Exists(pdfPath))
+                        File.Delete(pdfPath);
+                }
+                catch { }
+            });
         }
         private string GenerateReceiptPDF(string receiptId, string content)
         {
@@ -532,6 +564,7 @@ namespace D365POS
         {
             loaderOverlay.IsVisible = true;
             activityIndicator.IsRunning = true;
+
             // Filter only non-void products
             var activeProducts = AddedProducts.Where(p => !p.IsVoid).ToList();
 
@@ -555,22 +588,22 @@ namespace D365POS
                 // Calculate totals considering tax
                 foreach (var p in activeProducts)
                 {
-                    decimal taxAmount, netAmount, grossAmount;
+                    decimal taxAmount, netAmount, total;
 
                     if (p.PriceIncludeTax > 0) // Price already includes tax
                     {
                         taxAmount = Math.Round(p.Total - (p.Total / (1 + p.TaxFactor)), 4);
                         netAmount = Math.Round(p.Total / (1 + p.TaxFactor), 4);
-                        grossAmount = p.Total;
+                        total = p.Total;
                     }
                     else // Price does not include tax
                     {
                         taxAmount = Math.Round(p.Total * p.TaxFactor, 4);
                         netAmount = p.Total;
-                        grossAmount = p.Total + taxAmount;
+                        total = p.Total + taxAmount;
                     }
                     totalExcludingVAT += netAmount;
-                    totalAmount += grossAmount;
+                    totalAmount += total;
                     totalTax += taxAmount;
                 }
 

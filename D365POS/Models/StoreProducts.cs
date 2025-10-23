@@ -62,7 +62,6 @@ namespace D365POS.Models
         // FRONT-END ONLY: Total
         public decimal Total => Quantity * UnitPrice;
 
-        [Ignore]
         public decimal TaxAmount
         {
             get
@@ -83,7 +82,6 @@ namespace D365POS.Models
             }
         }
 
-        [Ignore]
         public decimal Subtotal
         {
             get
