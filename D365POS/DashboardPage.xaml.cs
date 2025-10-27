@@ -17,14 +17,45 @@ public partial class DashboardPage : ContentPage
 
     private async void OnSaleClicked(object sender, EventArgs e)
     {
-        // Resolve SalesPage from DI
-        var salesPage = _serviceProvider.GetRequiredService<SalesPage>();
-        await Navigation.PushAsync(salesPage);
+        loaderOverlay.IsVisible = true;
+        activityIndicator.IsRunning = true;
+        await Task.Delay(100);
+
+        try
+        {
+            var salesPage = _serviceProvider.GetRequiredService<SalesPage>();
+            await Navigation.PushAsync(salesPage); 
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Error", $"Failed to navigate to Sales Page: {ex.Message}", "OK");
+        }
+        finally
+        {
+            loaderOverlay.IsVisible = false;
+            activityIndicator.IsRunning = false; 
+        }
     }
     private async void OnShowJournalClicked(object sender, EventArgs e)
     {
-        var journalPage = _serviceProvider.GetRequiredService<ShowJournalPage>();
-        await Navigation.PushAsync(journalPage);
+        loaderOverlay.IsVisible = true;
+        activityIndicator.IsRunning = true;
+        await Task.Delay(100);
+
+        try
+        {
+            var journalPage = _serviceProvider.GetRequiredService<ShowJournalPage>();
+            await Navigation.PushAsync(journalPage);
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Error", $"Failed to navigate to Journal Page: {ex.Message}", "OK");
+        }
+        finally
+        {
+            loaderOverlay.IsVisible = false;
+            activityIndicator.IsRunning = false;
+        }
     }
     private async void OnPriceCheckClicked(object sender, EventArgs e)
     {

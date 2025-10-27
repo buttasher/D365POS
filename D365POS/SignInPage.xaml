@@ -94,10 +94,34 @@
 
                 <!-- Password -->
                 <Label Text="Password" FontSize="14"/>
-                <Entry x:Name="PasswordEntry"
-                       IsPassword="True"
-                       Placeholder="Enter password"
-                       HorizontalOptions="Fill"/>
+
+                <Grid ColumnSpacing="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Password Entry -->
+                    <Entry x:Name="PasswordEntry"
+                           IsPassword="True"
+                           Placeholder="Enter password"
+                           HorizontalOptions="Fill"
+                           Grid.Column="0"/>
+
+                        <!-- Eye Icon Button -->
+                    <Image x:Name="TogglePasswordImage"
+                           Source="eye.png"
+                           WidthRequest="18"
+                           HeightRequest="18"
+                           Aspect="AspectFit"
+                           HorizontalOptions="End"
+                           VerticalOptions="Center"
+                           Margin="0,0,8,0">
+                        <Image.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnTogglePasswordClicked" />
+                        </Image.GestureRecognizers>
+                    </Image>
+                </Grid>
 
                 <!-- Sign In Button -->
                 <Button x:Name="SignInButton"
@@ -117,7 +141,6 @@
               HorizontalOptions="Fill"
               Grid.ColumnSpan="2">
             <ActivityIndicator x:Name="activityIndicator"
-                        Color="black"
                         IsRunning="True"
                         WidthRequest="60"
                         HeightRequest="60"

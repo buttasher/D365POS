@@ -80,12 +80,10 @@
 
         <!-- FULL SCREEN LOADER ON TOP -->
         <Grid x:Name="loaderOverlay"
-              Grid.ZIndex="1000"
               IsVisible="False"
               VerticalOptions="Fill"
               HorizontalOptions="Fill">
             <ActivityIndicator x:Name="activityIndicator"
-                           Color="black"
                            IsRunning="True"
                            WidthRequest="60"
                            HeightRequest="60"

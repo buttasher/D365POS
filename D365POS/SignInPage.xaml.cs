@@ -16,10 +16,15 @@ namespace D365POS
         {
             Dispatcher.StartTimer(TimeSpan.FromSeconds(1), () =>
             {
-                lblTime.Text = DateTime.Now.ToString("hh:mm tt");  
+                lblTime.Text = DateTime.Now.ToString("hh:mm tt");
                 lblDate.Text = DateTime.Now.ToString("MM/dd/yyyy");
-                return true; 
+                return true;
             });
+        }
+        private void OnTogglePasswordClicked(object sender, TappedEventArgs e)
+        {
+            PasswordEntry.IsPassword = !PasswordEntry.IsPassword;
+            TogglePasswordImage.Source = PasswordEntry.IsPassword ? "eye.png" : "hide.png";
         }
         private async void OnSignInClicked(object sender, EventArgs e)
         {

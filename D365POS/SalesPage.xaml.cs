@@ -14,6 +14,8 @@ namespace D365POS
 {
     [QueryProperty(nameof(PaymentAmount), "PaymentAmount")]
     [QueryProperty(nameof(NewAmountDue), "NewAmountDue")]
+    [QueryProperty(nameof(IsReturn), "IsReturn")]
+    [QueryProperty(nameof(ReturnTransactionId), "ReturnTransactionId")]
     public partial class SalesPage : ContentPage
     {
 
@@ -25,6 +27,10 @@ namespace D365POS
         public ObservableCollection<StoreProducts> FilteredProducts { get; set; }
         public ObservableCollection<StoreProducts> AddedProducts { get; set; }
         private StoreProducts _selectedProduct;
+
+        public bool IsReturn { get; set; } = false;
+        public int ReturnTransactionId { get; set; } = 0;
+        private bool _returnLinesInitialized = false;
 
         private bool _isSearchListVisible;
         public bool IsSearchListVisible
@@ -117,7 +123,43 @@ namespace D365POS
 
             _allProducts = await _db.GetAllProducts();
             _allUnits = await _db.GetAllProductsUnit();
+
+
+            if (IsReturn && ReturnTransactionId != 0 && !_returnLinesInitialized)
+            {
+                await InitializeReturnLines();
+                _returnLinesInitialized = true; // mark as initialized
+            }
         }
+        private async Task InitializeReturnLines()
+        {
+            try
+            {
+                var lines = await _db.GetListAsync<POSRetailTransactionSalesTrans>(
+                    x => x.TransactionId == ReturnTransactionId
+                );
+
+                if (lines == null || !lines.Any())
+                    return;
+
+                foreach (var line in lines)
+                {
+                    var product = _allProducts.FirstOrDefault(p => p.ItemId == line.ItemId && p.UnitId == line.UnitId);
+
+                    if (product != null)
+                    {
+                        // Add the product as a return (negative quantity)
+                        AddProductToTable(product, -line.Qty);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Error", $"Failed to load return lines: {ex.Message}", "OK");
+            }
+        }
+
+
         private void OnProductSelectedFromList(object sender, SelectionChangedEventArgs e)
         {
             _selectedProduct = e.CurrentSelection.FirstOrDefault() as StoreProducts;
@@ -191,33 +233,34 @@ namespace D365POS
                 SearchResultsList.SelectedItem = null;
             }
         }
-        private void AddProductToTable(StoreProducts product)
+        private void AddProductToTable(StoreProducts product, decimal quantity = 1)
         {
-            // Find an existing **non-voided** item
-            var existing = AddedProducts.FirstOrDefault(p => p.ItemId == product.ItemId && !p.IsVoid);
+            // Check if already exists (ignore void)
+            var existing = AddedProducts.FirstOrDefault(p => p.ItemId == product.ItemId && p.UnitId == product.UnitId && !p.IsVoid);
 
-            // Get the unit price from StoreProductsUnit table
-            var unit = _allUnits.FirstOrDefault(u => u.ItemId == product.ItemId);
+            // Get unit info
+            var unit = _allUnits.FirstOrDefault(u => u.ItemId == product.ItemId && u.UnitId == product.UnitId);
             decimal unitPrice = unit?.UnitPrice ?? 0;
             decimal priceIncludeTax = unit?.PriceIncludeTax ?? 0;
 
             if (existing != null)
             {
-                existing.Quantity += 1;
-                existing.UnitPrice = unitPrice; // update unit price
+                existing.Quantity += quantity;
+                existing.UnitPrice = unitPrice;
                 existing.PriceIncludeTax = priceIncludeTax;
             }
             else
             {
-                product.Quantity = 1;
-                product.UnitPrice = unitPrice; // set unit price for new product
+                product.Quantity = quantity;
+                product.UnitPrice = unitPrice;
                 product.PriceIncludeTax = priceIncludeTax;
-                product.IsVoid = false;        // ensure new items are not voided
+                product.IsVoid = false;
                 AddedProducts.Add(product);
             }
 
             RecalculateTotals();
         }
+
         private async void OnPayCashClicked(object sender, EventArgs e)
         {
             var totalAmount = AddedProducts.Sum(p => p.Total);

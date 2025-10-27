@@ -16,7 +16,7 @@
                             SelectionChanged="OnJournalSelected">
                 <CollectionView.Header>
                     <Grid Padding="10"
-                          ColumnDefinitions="2*,*,*,*,2*,*"
+                          ColumnDefinitions="2*,*,*,2*,*"
                           BackgroundColor="#A66E43">
                         <Label Text="Business Date" FontAttributes="Bold"/>
                         <Label Text="Staff Id" Grid.Column="1" FontAttributes="Bold"/>
@@ -28,7 +28,7 @@
                 <CollectionView.ItemTemplate>
                     <DataTemplate>
                         <Grid Padding="10"
-                              ColumnDefinitions="2*,*,*,*,2*,*">
+                              ColumnDefinitions="2*,*,*,2*,*">
                             <Label Text="{Binding BusinessDate, StringFormat='{0:MM/dd/yyyy hh:mm tt}'}"/>
                             <Label Text="{Binding ShiftStaffId}" Grid.Column="1"/>
                             <Label Text="{Binding TransactionType}" Grid.Column="2"/>
@@ -141,7 +141,51 @@
                        VerticalOptions="Center"/>
             </Grid>
         </Grid>
-        
+
+        <!-- ===== FOOTER BAR (Bottom Buttons with Icons) ===== -->
+        <Grid Grid.Row="2"
+              BackgroundColor="Gray"
+              Padding="15,10"
+              ColumnDefinitions="*,Auto,Auto"
+              HorizontalOptions="Fill"
+              VerticalOptions="End"> 
+
+            <!-- Print Receipt Button -->
+            <HorizontalStackLayout Grid.Column="1"
+                                   Spacing="6"
+                                   Padding="10,0"
+                                   VerticalOptions="Center"
+                                   Margin="0,0,20,0">
+                <Image Source="printing.png"
+                       HeightRequest="30"
+                       WidthRequest="20"
+                       VerticalOptions="Center"/>
+                <Label Text="Print receipt"
+                       FontAttributes="Bold"
+                       VerticalOptions="Center"/>
+                <HorizontalStackLayout.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnPrintReceiptClicked"/>
+                </HorizontalStackLayout.GestureRecognizers>
+            </HorizontalStackLayout>
+
+            <!-- Return Button -->
+            <HorizontalStackLayout Grid.Column="2"
+                                   Spacing="6"
+                                   Padding="10,0"
+                                   VerticalOptions="Center">
+                <Image Source="return.png"
+                       HeightRequest="30"
+                       WidthRequest="20"
+                       VerticalOptions="Center"/>
+                <Label Text="Return"
+                       FontAttributes="Bold"
+                       VerticalOptions="Center"/>
+                <HorizontalStackLayout.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnReturnClicked"/>
+                </HorizontalStackLayout.GestureRecognizers>
+            </HorizontalStackLayout>
+        </Grid>
+
         <!-- FULL SCREEN LOADER -->
         <Grid x:Name="loaderOverlay"
               IsVisible="False"
@@ -149,12 +193,11 @@
               HorizontalOptions="Fill"
               Grid.ColumnSpan="2">
                 <ActivityIndicator x:Name="activityIndicator"
-                                  Color="black"
-                                  IsRunning="True"
-                                  WidthRequest="60"
-                                  HeightRequest="60"
-                                  VerticalOptions="Center"
-                                  HorizontalOptions="Center"/>
+                                   IsRunning="True"
+                                   WidthRequest="60"
+                                   HeightRequest="60"
+                                   VerticalOptions="Center"
+                                   HorizontalOptions="Center"/>
         </Grid>
     </Grid>
 </ContentPage>

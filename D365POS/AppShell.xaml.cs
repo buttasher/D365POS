@@ -8,6 +8,7 @@
             Routing.RegisterRoute(nameof(DashboardPage), typeof(DashboardPage));
             Routing.RegisterRoute(nameof(PayCashPage), typeof(PayCashPage));
             Routing.RegisterRoute(nameof(ShowJournalPage), typeof(ShowJournalPage));
+            Routing.RegisterRoute(nameof(SalesPage), typeof(SalesPage));
         }
     }
 }
