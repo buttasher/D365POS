@@ -72,12 +72,12 @@ namespace D365POS.Models
                 if (PriceIncludeTax > 0)
                 {
                     // Extract tax (price includes tax)
-                    return Math.Round(Total - (Total / (1 + TaxFactor)), 4);
+                    return Math.Round(Total - (Total / (1 + TaxFactor)), 3);
                 }
                 else
                 {
                     // Add tax (price excludes tax)
-                    return Math.Round(Total * TaxFactor, 4);
+                    return Math.Round(Total * TaxFactor, 3);
                 }
             }
         }
@@ -86,7 +86,7 @@ namespace D365POS.Models
         {
             get
             {
-                return Total + TaxAmount;
+                return Math.Round(Total + TaxAmount,3);
                 
             }
         }

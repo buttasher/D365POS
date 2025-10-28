@@ -34,6 +34,10 @@ namespace D365POS.Services
         {
             return await _connection.Table<POSRetailTransactionTable>().ToListAsync();
         }
+        public async Task<T?> GetAsync<T>(Expression<Func<T, bool>> predicate) where T : new()
+        {
+            return await _connection.Table<T>().Where(predicate).FirstOrDefaultAsync();
+        }
         // ==========================
         // SalesTrans Methods
         // ==========================
@@ -74,6 +78,7 @@ namespace D365POS.Services
         {
             return await _connection.Table<StoreProducts>().ToListAsync();
         }
+
 
         // Insert single product
         public async Task InsertProduct(StoreProducts product)

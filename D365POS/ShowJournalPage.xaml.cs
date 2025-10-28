@@ -1,7 +1,8 @@
-using D365POS.Models;
+﻿using D365POS.Models;
 using D365POS.Services;
 using PdfSharpCore.Drawing;
 using PdfSharpCore.Pdf;
+using System.Collections.ObjectModel;
 
 namespace D365POS;
 
@@ -10,38 +11,28 @@ public partial class ShowJournalPage : ContentPage
     private readonly DatabaseService _db;
     private int _selectedTransactionId;
     private bool _isPaymentsTabActive = false;
+    private List<POSRetailTransactionSalesTrans> _selectedLines = new();
+
 
     private decimal _subtotal;
     public decimal Subtotal
     {
         get => _subtotal;
-        set
-        {
-            _subtotal = value;
-            OnPropertyChanged(nameof(Subtotal));
-        }
+        set { _subtotal = value; OnPropertyChanged(nameof(Subtotal)); }
     }
 
     private decimal _tax;
     public decimal Tax
     {
         get => _tax;
-        set
-        {
-            _tax = value;
-            OnPropertyChanged(nameof(Tax));
-        }
+        set { _tax = value; OnPropertyChanged(nameof(Tax)); }
     }
 
     private decimal _total;
     public decimal Total
     {
         get => _total;
-        set
-        {
-            _total = value;
-            OnPropertyChanged(nameof(Total));
-        }
+        set { _total = value; OnPropertyChanged(nameof(Total)); }
     }
 
     public ShowJournalPage(DatabaseService db)
@@ -50,6 +41,11 @@ public partial class ShowJournalPage : ContentPage
         _db = db;
         BindingContext = this;
         SetTabState(linesActive: true);
+
+        // Initialize selection handling
+        DetailsList.SelectionMode = SelectionMode.Multiple;
+        DetailsList.SelectionChanged += OnLineSelected;
+        SetLinesTemplate();
     }
 
     protected override async void OnAppearing()
@@ -70,13 +66,21 @@ public partial class ShowJournalPage : ContentPage
         if (selected == null) return;
 
         _selectedTransactionId = selected.TransactionId;
-
         await LoadTotalsAsync();
 
         if (_isPaymentsTabActive)
             await LoadPaymentsTab();
         else
             await LoadLinesTab();
+    }
+
+    //Updated Selection Handler
+    private void OnLineSelected(object sender, SelectionChangedEventArgs e)
+    {
+        if (_isPaymentsTabActive || DetailsList.SelectionMode == SelectionMode.None)
+            return;
+
+        _selectedLines = e.CurrentSelection.Cast<POSRetailTransactionSalesTrans>().ToList();
     }
 
     private async void OnReturnClicked(object sender, EventArgs e)
@@ -89,19 +93,38 @@ public partial class ShowJournalPage : ContentPage
                 return;
             }
 
-            var lines = await _db.GetListAsync<POSRetailTransactionSalesTrans>(
-                x => x.TransactionId == _selectedTransactionId);
-
-            if (lines == null || !lines.Any())
+            if (_isPaymentsTabActive)
             {
-                await DisplayAlert("No Lines", "No items found for this transaction.", "OK");
+                await DisplayAlert("Invalid Action", "Please switch to Lines tab to select items to return.", "OK");
                 return;
             }
 
+            if (_selectedLines == null || !_selectedLines.Any())
+            {
+                await DisplayAlert("No Line Selected", "Please select at least one line to return.", "OK");
+                return;
+            }
+
+            var transaction = await _db.GetAsync<POSRetailTransactionTable>(x => x.TransactionId == _selectedTransactionId);
+
+            if (transaction == null)
+            {
+                await DisplayAlert("Error", "Transaction not found.", "OK");
+                return;
+            }
+
+            if (transaction.TransactionType == POSRetailTransactionTable.TransactionTypeEnum.Return)
+            {
+                await DisplayAlert("Invalid Operation", "You cannot return a transaction of type RETURN.", "OK");
+                return;
+            }
+
+            // Pass only selected lines to return page
             await Shell.Current.GoToAsync(nameof(SalesPage), new Dictionary<string, object>
             {
                 { "IsReturn", true },
-                { "ReturnTransactionId", _selectedTransactionId }
+                { "ReturnTransactionId", _selectedTransactionId },
+                { "ReturnLines", _selectedLines }
             });
         }
         catch (Exception ex)
@@ -109,16 +132,109 @@ public partial class ShowJournalPage : ContentPage
             await DisplayAlert("Error", $"Failed to initiate return: {ex.Message}", "OK");
         }
     }
+    private void SetLinesHeader()
+    {
+        HeaderCol1.Text = "Description";
+        HeaderCol2.Text = "Quantity";
+        HeaderCol3.Text = "Price";
+    }
+
+    private void SetPaymentsHeader()
+    {
+        HeaderCol1.Text = "Payment Method";
+        HeaderCol2.Text = "Currency";
+        HeaderCol3.Text = "Amount";
+    }
+    private void SetLinesTemplate()
+    {
+        DetailsList.ItemTemplate = new DataTemplate(() =>
+        {
+            var grid = new Grid
+            {
+                Padding = 10,
+                ColumnDefinitions =
+            {
+                new ColumnDefinition { Width = new GridLength(2, GridUnitType.Star) },
+                new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) },
+                new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }
+            }
+            };
+
+            var lblDesc = new Label();
+            lblDesc.SetBinding(Label.TextProperty, "ItemDescription");
+            grid.Add(lblDesc, 0, 0);
+
+            var lblQty = new Label { HorizontalTextAlignment = TextAlignment.Center };
+            lblQty.SetBinding(Label.TextProperty, new Binding("Qty", stringFormat: "{0:N3}"));
+            grid.Add(lblQty, 1, 0);
+
+            var lblPrice = new Label { HorizontalTextAlignment = TextAlignment.End };
+            lblPrice.SetBinding(Label.TextProperty, new Binding("UnitPrice", stringFormat: "{0:N3}"));
+            grid.Add(lblPrice, 2, 0);
+
+            return grid;
+        });
+    }
+
+    private void SetPaymentsTemplate()
+    {
+        DetailsList.ItemTemplate = new DataTemplate(() =>
+        {
+            var grid = new Grid
+            {
+                Padding = 10,
+                ColumnDefinitions =
+            {
+                new ColumnDefinition { Width = new GridLength(2, GridUnitType.Star) },
+                new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) },
+                new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }
+            }
+            };
+
+            var lblMethod = new Label();
+            lblMethod.SetBinding(Label.TextProperty, "Col1");
+            grid.Add(lblMethod, 0, 0);
+
+            var lblCurrency = new Label { HorizontalTextAlignment = TextAlignment.Center };
+            lblCurrency.SetBinding(Label.TextProperty, "Col2");
+            grid.Add(lblCurrency, 1, 0);
+
+            var lblAmount = new Label { HorizontalTextAlignment = TextAlignment.End };
+            lblAmount.SetBinding(Label.TextProperty, "Col3");
+            grid.Add(lblAmount, 2, 0);
+
+            return grid;
+        });
+    }
+
+    private async void OnLinesTabClicked(object sender, TappedEventArgs e)
+    {
+        _isPaymentsTabActive = false;
+        SetTabState(linesActive: true);
+        SetLinesHeader();
+        SetLinesTemplate();
+        if (_selectedTransactionId != 0)
+            await LoadLinesTab();
+        DetailsList.SelectionMode = SelectionMode.Multiple;
+    }
+
+    private async void OnPaymentsTabClicked(object sender, TappedEventArgs e)
+    {
+        _isPaymentsTabActive = true;
+        SetTabState(linesActive: false);
+        SetPaymentsHeader();
+        SetPaymentsTemplate();
+        if (_selectedTransactionId != 0)
+            await LoadPaymentsTab();
+        DetailsList.SelectionMode = SelectionMode.None;
+    }
 
     private async Task LoadTotalsAsync()
     {
         try
         {
-            var lines = await _db.GetListAsync<POSRetailTransactionSalesTrans>(
-                x => x.TransactionId == _selectedTransactionId);
-
-            var taxTrans = await _db.GetListAsync<POSRetailTransactionTaxTrans>(
-                x => x.TransactionId == _selectedTransactionId);
+            var lines = await _db.GetListAsync<POSRetailTransactionSalesTrans>(x => x.TransactionId == _selectedTransactionId);
+            var taxTrans = await _db.GetListAsync<POSRetailTransactionTaxTrans>(x => x.TransactionId == _selectedTransactionId);
 
             Subtotal = lines.Sum(l => l.NetAmount * l.Qty);
             Tax = taxTrans.Sum(t => t.TaxAmount);
@@ -130,60 +246,36 @@ public partial class ShowJournalPage : ContentPage
         }
     }
 
-    private async void OnLinesTabClicked(object sender, TappedEventArgs e)
-    {
-        _isPaymentsTabActive = false;
-        SetTabState(linesActive: true);
-        SetLinesHeader();
-        if (_selectedTransactionId != 0)
-            await LoadLinesTab();
-    }
+   
 
-    private async void OnPaymentsTabClicked(object sender, TappedEventArgs e)
-    {
-        _isPaymentsTabActive = true;
-        SetTabState(linesActive: false);
-        SetPaymentsHeader();
-        if (_selectedTransactionId != 0)
-            await LoadPaymentsTab();
-    }
-
-    private void SetLinesHeader()
-    {
-        HeaderCol1.Text = "ITEM ID";
-        HeaderCol2.Text = "QUANTITY";
-        HeaderCol3.Text = "PRICE";
-    }
-
-    private void SetPaymentsHeader()
-    {
-        HeaderCol1.Text = "PAYMENT METHOD";
-        HeaderCol2.Text = "CURRENCY";
-        HeaderCol3.Text = "AMOUNT";
-    }
-
+    // Updated LoadLinesTab for binding selection
     private async Task LoadLinesTab()
     {
         var lines = await _db.GetListAsync<POSRetailTransactionSalesTrans>(x => x.TransactionId == _selectedTransactionId);
+        var products = await _db.GetAllProducts();
 
-        DetailsList.ItemsSource = lines.Select(l => new
+        foreach (var line in lines)
         {
-            Col1 = l.ItemId,
-            Col2 = l.Qty,
-            Col3 = l.NetAmount
-        }).ToList();
+            var product = products.FirstOrDefault(p => p.ItemId == line.ItemId);
+            line.ItemDescription = product?.Description ?? "N/A";
+            line.UnitPrice = line.UnitPrice;
+        }
+
+        DetailsList.ItemsSource = lines;
     }
 
     private async Task LoadPaymentsTab()
     {
         var payments = await _db.GetListAsync<POSRetailTransactionPaymentTrans>(x => x.TransactionId == _selectedTransactionId);
 
-        DetailsList.ItemsSource = payments.Select(p => new
+        var paymentDisplay = payments.Select(p => new
         {
             Col1 = p.PaymentMethod,
             Col2 = p.Currency,
             Col3 = p.PaymentAmount.ToString("N3")
         }).ToList();
+
+        DetailsList.ItemsSource = paymentDisplay;
     }
 
     private void SetTabState(bool linesActive)
@@ -201,7 +293,6 @@ public partial class ShowJournalPage : ContentPage
         OnPropertyChanged(nameof(PaymentsUnderlineColor));
     }
 
-    // Bindable properties for colors
     public Color LinesTabColor { get; set; }
     public Color PaymentsTabColor { get; set; }
     public Color LinesUnderlineColor { get; set; }
@@ -393,4 +484,5 @@ public partial class ShowJournalPage : ContentPage
 
         return filePath;
     }
+
 }

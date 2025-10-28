@@ -16,6 +16,7 @@ namespace D365POS
     [QueryProperty(nameof(NewAmountDue), "NewAmountDue")]
     [QueryProperty(nameof(IsReturn), "IsReturn")]
     [QueryProperty(nameof(ReturnTransactionId), "ReturnTransactionId")]
+    [QueryProperty(nameof(ReturnLines), "ReturnLines")]
     public partial class SalesPage : ContentPage
     {
 
@@ -30,6 +31,8 @@ namespace D365POS
 
         public bool IsReturn { get; set; } = false;
         public int ReturnTransactionId { get; set; } = 0;
+        public List<POSRetailTransactionSalesTrans> ReturnLines { get; set; }
+
         private bool _returnLinesInitialized = false;
 
         private bool _isSearchListVisible;
@@ -135,6 +138,22 @@ namespace D365POS
         {
             try
             {
+                if (IsReturn && ReturnLines != null)
+                {
+                    foreach (var line in ReturnLines)
+                    {
+                        var product = _allProducts.FirstOrDefault(p =>
+                        p.ItemId == line.ItemId && p.UnitId == line.UnitId);
+
+                        if (product != null)
+                        {
+                            AddProductToTable(product, -line.Qty); // Add as negative qty
+                        }
+                       
+                    }
+                    return;
+                }
+
                 var lines = await _db.GetListAsync<POSRetailTransactionSalesTrans>(
                     x => x.TransactionId == ReturnTransactionId
                 );
@@ -144,11 +163,11 @@ namespace D365POS
 
                 foreach (var line in lines)
                 {
-                    var product = _allProducts.FirstOrDefault(p => p.ItemId == line.ItemId && p.UnitId == line.UnitId);
+                    var product = _allProducts.FirstOrDefault(p =>
+                        p.ItemId == line.ItemId && p.UnitId == line.UnitId);
 
                     if (product != null)
                     {
-                        // Add the product as a return (negative quantity)
                         AddProductToTable(product, -line.Qty);
                     }
                 }
@@ -158,7 +177,6 @@ namespace D365POS
                 await DisplayAlert("Error", $"Failed to load return lines: {ex.Message}", "OK");
             }
         }
-
 
         private void OnProductSelectedFromList(object sender, SelectionChangedEventArgs e)
         {
@@ -613,7 +631,7 @@ namespace D365POS
 
             if (!activeProducts.Any())
             {
-                await DisplayAlert("No items", "There are no non-void items to record.", "OK");
+                await DisplayAlert("No items", "There are no items to record.", "OK");
                 return;
             }
 
@@ -628,6 +646,8 @@ namespace D365POS
                 decimal totalTax = 0m;
                 decimal totalExcludingVAT = 0m;
 
+                decimal unitPrice = activeProducts.ToString() != null ? activeProducts.Sum(p => p.UnitPrice) : 0m;
+
                 // Calculate totals considering tax
                 foreach (var p in activeProducts)
                 {
@@ -635,13 +655,13 @@ namespace D365POS
 
                     if (p.PriceIncludeTax > 0) // Price already includes tax
                     {
-                        taxAmount = Math.Round(p.Total - (p.Total / (1 + p.TaxFactor)), 4);
-                        netAmount = Math.Round(p.Total / (1 + p.TaxFactor), 4);
+                        taxAmount = Math.Round(p.Total - (p.Total / (1 + p.TaxFactor)), 3);
+                        netAmount = Math.Round(p.Total / (1 + p.TaxFactor), 3);
                         total = p.Total;
                     }
                     else // Price does not include tax
                     {
-                        taxAmount = Math.Round(p.Total * p.TaxFactor, 4);
+                        taxAmount = Math.Round(p.Total * p.TaxFactor, 3);
                         netAmount = p.Total;
                         total = p.Total + taxAmount;
                     }
@@ -667,7 +687,7 @@ namespace D365POS
                             PaymentMethod = paymentMethod,
                             PaymentType = "",
                             Currency = "AED",
-                            PaymentAmount = totalAmount.ToString("F3")
+                            PaymentAmount = Math.Round(totalAmount,3)
                         }
                     },
                     Taxes = new List<RecordSalesService.TaxDto>
@@ -676,14 +696,14 @@ namespace D365POS
                         {
                             TaxName = "VAT",
                             TaxRate = (double)(activeProducts.FirstOrDefault()?.TaxFactor ?? 0.05m),
-                            TaxValue = totalTax.ToString("F3")
+                            TaxValue =  Math.Round(totalTax,3)
                         }
                     },
                     Items = activeProducts.Select(p => new RecordSalesService.ItemDto
                     {
                         ItemId = p.ItemId,
                         UnitId = p.UnitId,
-                        UnitPrice = p.UnitPrice,
+                        UnitPrice = p.Total,
                         Qty = (int)p.Quantity,
                         LineAmount = p.Total,
                         TaxAmount = p.TaxAmount,
@@ -710,8 +730,10 @@ namespace D365POS
                         ReceiptId = saleItem.ReceiptId,
                         BusinessDate = DateTime.Now,
                         Currency = saleItem.Payments.FirstOrDefault()?.Currency ?? "AED",
-                        Total = totalAmount
+                        Total = Math.Round(totalAmount, 3),
+                        TransactionType = IsReturn ? POSRetailTransactionTable.TransactionTypeEnum.Return: POSRetailTransactionTable.TransactionTypeEnum.Sale
                     };
+
                     await _db.CreateTransactionTable(header);
 
                     // Save each line (only active products)
@@ -723,12 +745,12 @@ namespace D365POS
                             TransactionId = header.TransactionId,
                             LineNum = lineNum++,
                             ItemId = p.ItemId,
-                            Qty = p.Quantity,
+                            Qty = Math.Round(p.Quantity, 3),
                             UnitId = p.UnitId,
-                            UnitPrice = p.UnitPrice,
-                            NetAmount = p.UnitPrice,
-                            TaxAmount = p.TaxAmount,
-                            GrossAmount = p.Subtotal,
+                            UnitPrice = Math.Round(p.Total, 3),
+                            NetAmount = Math.Round(p.Total, 3),
+                            TaxAmount = Math.Round(p.TaxAmount, 3),
+                            GrossAmount = Math.Round(p.Subtotal, 3),
                             DiscAmount = 0,
                             DiscAmountWithoutTax = 0
                         };
@@ -743,7 +765,7 @@ namespace D365POS
                         PaymentMethod = paymentMethod,
                         PaymentType = "",
                         Currency = saleItem.Payments.FirstOrDefault()?.Currency ?? "AED",
-                        PaymentAmount = totalAmount
+                        PaymentAmount = Math.Round(totalAmount, 3)
                     };
                     await _db.CreateTransactionPaymentTrans(payment);
 
@@ -752,8 +774,8 @@ namespace D365POS
                     {
                         TransactionId = header.TransactionId,
                         TaxName = saleItem.Taxes.FirstOrDefault()?.TaxName ?? "VAT",
-                        TaxRate = saleItem.Taxes.FirstOrDefault()?.TaxRate ?? 0.05,
-                        TaxAmount = totalTax
+                        TaxRate = Math.Round(saleItem.Taxes.FirstOrDefault()?.TaxRate ?? 0.05, 3),
+                        TaxAmount = Math.Round(totalTax, 3)
                     };
                     await _db.CreateTransactionTaxTrans(tax);
 
@@ -780,8 +802,6 @@ namespace D365POS
                 activityIndicator.IsRunning = false;
             }
         }
-
-
         private async Task<bool> ShowConfirmationPopup(decimal paymentAmount, decimal newAmountDue)
         {
             try

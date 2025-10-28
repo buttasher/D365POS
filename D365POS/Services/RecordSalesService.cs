@@ -86,14 +86,14 @@ namespace D365POS.Services
             public string PaymentMethod { get; set; }
             public string PaymentType { get; set; }
             public string Currency { get; set; }
-            public string PaymentAmount { get; set; }
+            public decimal PaymentAmount { get; set; }
         }
 
         public class TaxDto
         {
             public string TaxName { get; set; }
             public double TaxRate { get; set; }
-            public string TaxValue { get; set; }
+            public decimal TaxValue { get; set; }
         }
 
         public class ItemDto

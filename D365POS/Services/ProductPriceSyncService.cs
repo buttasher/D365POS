@@ -29,7 +29,7 @@ namespace D365POS.Services
                 {
                     ItemId = p.ItemId,
                     UnitId = p.UnitId,
-                    UnitPrice = p.UnitPrice,
+                    UnitPrice = Math.Round(p.UnitPrice,3),
                     PriceIncludeTax = p.PriceIncludeTax,
                 }).ToList();
 

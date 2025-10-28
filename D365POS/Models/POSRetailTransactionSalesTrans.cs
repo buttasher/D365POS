@@ -12,6 +12,9 @@ namespace D365POS.Models
         public int TransactionId { get; set; }
         public decimal LineNum { get; set; }
         public string ItemId { get; set; }
+
+        [Ignore] 
+        public string ItemDescription { get; set; }
         public decimal Qty { get; set; }
         public string UnitId { get; set; }
         public decimal UnitPrice { get; set; }

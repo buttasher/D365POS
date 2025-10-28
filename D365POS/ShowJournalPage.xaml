@@ -88,28 +88,19 @@
                                 Grid.Row="1"
                                 VerticalOptions="Fill"
                                 HorizontalOptions="Fill"
-                                SelectionMode="None">
+                                SelectionMode="Multiple"
+                                SelectionChanged="OnLineSelected">
                     <CollectionView.Header>
                         <Grid x:Name="DetailsHeaderGrid"
                               Padding="10"
-                              ColumnDefinitions="*,*,*"
+                              ColumnDefinitions="2*,*,*"
                               BackgroundColor="#A66E43">
-                            <Label x:Name="HeaderCol1" Text="ITEM ID" FontAttributes="Bold"/>
-                            <Label x:Name="HeaderCol2" Text="QUANTITY" Grid.Column="1" FontAttributes="Bold" HorizontalTextAlignment="Center"/>
-                            <Label x:Name="HeaderCol3" Text="PRICE" Grid.Column="2" FontAttributes="Bold" HorizontalTextAlignment="End"/>
+                            <Label x:Name="HeaderCol1" Text="Item" FontAttributes="Bold"/>
+                            <Label x:Name="HeaderCol2" Text="Quantity" Grid.Column="1" FontAttributes="Bold" HorizontalTextAlignment="Center"/>
+                            <Label x:Name="HeaderCol3" Text="Price" Grid.Column="2" FontAttributes="Bold" HorizontalTextAlignment="End"/>
                         </Grid>
                     </CollectionView.Header>
-
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate>
-                            <Grid Padding="10" ColumnDefinitions="*,*,*">
-                                <Label Text="{Binding Col1}" Grid.Column="0"/>
-                                <Label Text="{Binding Col2, StringFormat='{0:N3}'}" Grid.Column="1" HorizontalTextAlignment="Center"/>
-                                <Label Text="{Binding Col3, StringFormat='{0:N3}'}" Grid.Column="2" HorizontalTextAlignment="End"/>
-                            </Grid>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
+                    </CollectionView>
             </Grid>
 
             <!-- RIGHT: Totals (column 1) -->
