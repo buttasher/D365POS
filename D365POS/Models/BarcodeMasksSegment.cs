@@ -14,5 +14,7 @@ namespace D365POS.Models
         public int SegmentNumber { get; set; }
         public string Type { get; set; }
         public int Length { get; set; }
+        public string Char { get; set; }
+        public decimal Decimals { get; set; }
     }
 }

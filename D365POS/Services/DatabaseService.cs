@@ -20,6 +20,8 @@ namespace D365POS.Services
             _connection.CreateTableAsync<POSRetailTransactionSalesTrans>().Wait();
             _connection.CreateTableAsync<POSRetailTransactionPaymentTrans>().Wait();
             _connection.CreateTableAsync<POSRetailTransactionTaxTrans>().Wait();
+            _connection.CreateTableAsync<BarcodeMasks>().Wait();
+            _connection.CreateTableAsync<BarcodeMasksSegment>().Wait();
 
         }
 
@@ -122,5 +124,32 @@ namespace D365POS.Services
         {
             await _connection.DeleteAllAsync<StoreProductsUnit>();
         }
+        // Masks Methods
+        // ==========================
+        // Insert multiple products
+        public async Task InsertMasks(List<BarcodeMasks> masks)
+        {
+            await _connection.InsertAllAsync(masks);
+        }
+        public async Task<List<BarcodeMasks>> GetAllMasksAsync()
+        {
+            return await _connection.Table<BarcodeMasks>().ToListAsync();
+        }
+        public async Task DeleteAllMasksAsync()
+        {
+            await _connection.DeleteAllAsync<BarcodeMasks>();
+        }
+        // Masks Segment Methods
+        // ==========================
+        // Insert multiple products
+        public async Task InsertMasksSegment(List<BarcodeMasksSegment> masksSegment)
+        {
+            await _connection.InsertAllAsync(masksSegment);
+        }
+        public async Task DeleteAllMaskSegmentsAsync()
+        {
+            await _connection.DeleteAllAsync<BarcodeMasksSegment>();
+        }
+
     }
 }

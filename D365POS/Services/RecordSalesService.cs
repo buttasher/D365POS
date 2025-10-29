@@ -10,7 +10,7 @@ namespace D365POS.Services
         private readonly HttpClient _client = new HttpClient();
 
         private readonly string _url =
-            "https://aduat.sandbox.operations.uae.dynamics.com/api/services/TBInventoryServices/TBPOSOperationService/recordSales";
+            "https://tbd365deve8cbf0eb94119fe1devaos.cloudax.uae.dynamics.com/api/services/TBInventoryServices/TBPOSOperationService/recordSales";
 
         public async Task<bool> RecordSalesAsync(string company, List<SaleItemDto> saleItems, CancellationToken token = default)
         {

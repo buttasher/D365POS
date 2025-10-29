@@ -29,7 +29,7 @@
                     <!-- Entry + Button -->
                     <HorizontalStackLayout Spacing="20" HorizontalOptions="Center">
                         <Entry x:Name="ItemIdEntry"
-                               Placeholder="Enter Item ID"
+                               Placeholder="Enter Barcode"
                                PlaceholderColor="#999"
                                HorizontalOptions="Fill"
                                VerticalOptions="Center"

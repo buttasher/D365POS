@@ -113,9 +113,10 @@ public partial class ShowJournalPage : ContentPage
                 return;
             }
 
-            if (transaction.TransactionType == POSRetailTransactionTable.TransactionTypeEnum.Return)
+            if (transaction.TransactionType == POSRetailTransactionTable.TransactionTypeEnum.Return
+                || transaction.TransactionType == POSRetailTransactionTable.TransactionTypeEnum.Void)
             {
-                await DisplayAlert("Invalid Operation", "You cannot return a transaction of type RETURN.", "OK");
+                await DisplayAlert("Invalid Operation", "You cannot return a transaction of type RETURN or Void.", "OK");
                 return;
             }
 
@@ -236,7 +237,7 @@ public partial class ShowJournalPage : ContentPage
             var lines = await _db.GetListAsync<POSRetailTransactionSalesTrans>(x => x.TransactionId == _selectedTransactionId);
             var taxTrans = await _db.GetListAsync<POSRetailTransactionTaxTrans>(x => x.TransactionId == _selectedTransactionId);
 
-            Subtotal = lines.Sum(l => l.NetAmount * l.Qty);
+            Subtotal = lines.Sum(l => l.NetAmount);
             Tax = taxTrans.Sum(t => t.TaxAmount);
             Total = lines.Sum(l => l.GrossAmount);
         }
@@ -317,6 +318,16 @@ public partial class ShowJournalPage : ContentPage
             await DisplayAlert("No Lines", "No items found for this transaction.", "OK");
             return;
         }
+        // 🔹 Fetch all products once
+        var products = await _db.GetAllProducts();
+
+        // 🔹 Attach ItemDescription from product list
+        foreach (var line in lines)
+        {
+            var product = products.FirstOrDefault(p => p.ItemId == line.ItemId);
+            line.ItemDescription = product?.Description ?? line.ItemId; // fallback to ItemId if name not found
+        }
+
 
         decimal subtotal = lines.Sum(l => l.NetAmount * l.Qty);
         decimal tax = taxLines.Sum(t => t.TaxAmount);
@@ -385,7 +396,7 @@ public partial class ShowJournalPage : ContentPage
 
         foreach (var l in lines)
         {
-            var wrappedNameLines = WrapText(l.ItemId, 20).ToList();
+            var wrappedNameLines = WrapText(l.ItemDescription, 20).ToList();
             for (int i = 0; i < wrappedNameLines.Count; i++)
             {
                 string itemName = AlignText(wrappedNameLines[i], 20, "left");

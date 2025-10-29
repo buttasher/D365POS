@@ -4,25 +4,24 @@ using System.Text.Json;
 
 namespace D365POS.Services
 {
-    public class GetActiveProductPrices
+    public class GetMasksService
     {
         private readonly AuthService _authService = new AuthService();
         private readonly HttpClient _client = new HttpClient();
 
-        private readonly string _url = "https://tbd365deve8cbf0eb94119fe1devaos.cloudax.uae.dynamics.com/api/services/TBInventoryServices/TBPOSOperationService/getActiveProductPrices";
-        public async Task<List<ActiveProductPricesResponse>?> GetActiveProductPricesAsync(string company, string storeId, CancellationToken token = default)
+        private readonly string _url = "https://tbd365deve8cbf0eb94119fe1devaos.cloudax.uae.dynamics.com/api/services/TBInventoryServices/TBPOSOperationService/getProductBarcodes";
+        public async Task<List<MasksRequestResponse>?> GetMasksServiceAsync(string company, CancellationToken token = default)
         {
-            
+
             try
             {
                 // Step 1: Get access token
                 var accessToken = await _authService.GetAccessTokenAsync();
 
                 // Step 2: Build payload
-                var payload = new ActiveProductPricesRequest
+                var payload = new MasksRequest
                 {
                     company = company,
-                    storeId = storeId,
                 };
 
                 var json = JsonSerializer.Serialize(payload);
@@ -38,33 +37,40 @@ namespace D365POS.Services
 
                 var responseJson = await response.Content.ReadAsStringAsync(cts.Token);
 
-                return JsonSerializer.Deserialize<List<ActiveProductPricesResponse>>(responseJson,
+                return JsonSerializer.Deserialize<List<MasksRequestResponse>>(responseJson,
                     new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             }
             catch (Exception ex)
             {
-                return new List<ActiveProductPricesResponse>
+                return new List<MasksRequestResponse>
                 {
-                    new ActiveProductPricesResponse { ItemId = "Error", UnitId = ex.Message}
+                    new MasksRequestResponse { MaskId = "Error", Description = ex.Message, Mask = "N/A" }
                 };
             }
         }
 
         // DTOs inside the same class
-        public class ActiveProductPricesRequest
+        public class MasksRequest
         {
             public string company { get; set; }
-            public string storeId { get; set; }
         }
-        public class ActiveProductPricesResponse
+        public class MasksRequestResponse
         {
-            public string ItemId { get; set; }
-            public string UnitId { get; set; }
-            public decimal UnitPrice { get; set; }
-            public decimal PriceIncludeTax { get; set; }
+            public string MaskId { get; set; }
+            public string Description { get; set; }
+            public string Mask { get; set; }
+            public string Prefix { get; set; }
+            public int Length { get; set; }
+            public List<BarcodeSegmentsDto> barcodeSegments { get; set; }
 
+        }
+        public class BarcodeSegmentsDto
+        {
+            public int SegmentNum { get; set; }
+            public string Type { get; set; }
+            public int Length { get; set; }
+            public string Char { get; set; }
+            public decimal Decimals { get; set; }
         }
     }
-
 }
-

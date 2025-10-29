@@ -17,7 +17,7 @@ namespace D365POS.Services
                 var accessToken = await _authService.GetAccessTokenAsync();
 
                 // Step 2: Build request
-                var url = "https://aduat.sandbox.operations.uae.dynamics.com/api/services/TBGetGlobalUserGroup/TBGetGlobalUserService/getUser";
+                var url = "https://tbd365deve8cbf0eb94119fe1devaos.cloudax.uae.dynamics.com/api/services/TBGetGlobalUserGroup/TBGetGlobalUserService/getUser";
                 var payload = new
                 {
                     _userId = userId,

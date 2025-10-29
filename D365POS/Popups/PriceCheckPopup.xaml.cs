@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Maui.Views;
 using D365POS.Services;
+using D365POS.Models;
 
 namespace D365POS.Popups;
 
@@ -14,35 +15,51 @@ public partial class PriceCheckPopup : Popup
 
     private async void OnCheckPriceClicked(object sender, EventArgs e)
     {
-        string itemId = ItemIdEntry.Text?.Trim();
+        string barcode = ItemIdEntry.Text?.Trim();
 
-        if (string.IsNullOrEmpty(itemId))
+        if (string.IsNullOrEmpty(barcode))
         {
-            await App.Current.MainPage.DisplayAlert("Error", "Please enter an Item ID", "OK");
+            await App.Current.MainPage.DisplayAlert("Error", "Please enter or scan a barcode.", "OK");
             return;
         }
 
         try
         {
-          
-            // Load data
             loaderOverlay.IsVisible = true;
             await Task.Delay(300);
 
-            var allUnits = await _dbService.GetAllProductsUnit();
-            var matchingItems = allUnits
-                .Where(x => x.ItemId.Equals(itemId, StringComparison.OrdinalIgnoreCase))
-                .ToList();
+            // 1️⃣ Find product by Barcode
+            var allProducts = await _dbService.GetAllProducts();
+            var product = allProducts.FirstOrDefault(p =>
+                p.ItemBarCode.Equals(barcode, StringComparison.OrdinalIgnoreCase));
 
             loaderOverlay.IsVisible = false;
             ResultFrame.IsVisible = true;
             ResultListLayout.Children.Clear();
 
-            if (matchingItems.Any())
+            if (product == null)
             {
-                foreach (var item in matchingItems)
+                ResultListLayout.Children.Add(new Label
                 {
-                    var unitFrame = new Frame
+                    Text = $"No product found for barcode: {barcode}",
+                    FontSize = 16,
+                    TextColor = Colors.Red
+                });
+                return;
+            }
+
+            // 2️⃣ Get matching ItemId and find prices
+            var allUnits = await _dbService.GetAllProductsUnit();
+            var matchingUnits = allUnits
+                .Where(x => x.ItemId.Equals(product.ItemId, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            // 3️⃣ Display results
+            if (matchingUnits.Any())
+            {
+                foreach (var unit in matchingUnits)
+                {
+                    var frame = new Frame
                     {
                         BorderColor = Color.FromArgb("#A66E43"),
                         CornerRadius = 12,
@@ -53,24 +70,25 @@ public partial class PriceCheckPopup : Popup
                             Spacing = 4,
                             Children =
                             {
-                                new Label { Text = $"Unit: {item.UnitId}", FontSize = 16 },
-                                new Label { Text = $"Price: {item.UnitPrice}", FontSize = 16, TextColor = Colors.DarkGreen }
+                                new Label { Text = $"Item: {product.Description}", FontSize = 16, FontAttributes = FontAttributes.Bold },
+                                new Label { Text = $"UOM: {unit.UnitId}", FontSize = 16 },
+                                new Label { Text = $"Price: {unit.UnitPrice:N3}", FontSize = 16, TextColor = Colors.DarkGreen }
                             }
                         }
                     };
-                    ResultListLayout.Children.Add(unitFrame);
+
+                    ResultListLayout.Children.Add(frame);
                 }
             }
             else
             {
                 ResultListLayout.Children.Add(new Label
                 {
-                    Text = $"No record found for Item ID: {itemId}",
+                    Text = $"No price found for Item ID: {product.ItemId}",
                     FontSize = 16,
                     TextColor = Colors.Red
                 });
             }
-
         }
         catch (Exception ex)
         {
