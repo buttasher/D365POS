@@ -80,7 +80,11 @@ namespace D365POS.Services
         {
             return await _connection.Table<StoreProducts>().ToListAsync();
         }
-
+        public async Task<StoreProducts?> GetProductByPLUAsync(string pluCode)
+        {
+            return await _connection.Table<StoreProducts>()
+                .FirstOrDefaultAsync(x => x.PLUCode == pluCode);
+        }
 
         // Insert single product
         public async Task InsertProduct(StoreProducts product)
@@ -145,6 +149,15 @@ namespace D365POS.Services
         public async Task InsertMasksSegment(List<BarcodeMasksSegment> masksSegment)
         {
             await _connection.InsertAllAsync(masksSegment);
+        }
+        public async Task<List<BarcodeMasksSegment>> GetAllMasksSegmentAsync(Expression<Func<BarcodeMasksSegment, bool>> predicate = null)
+        {
+            var query = _connection.Table<BarcodeMasksSegment>();
+
+            if (predicate != null)
+                return await query.Where(predicate).ToListAsync();
+
+            return await query.ToListAsync();
         }
         public async Task DeleteAllMaskSegmentsAsync()
         {

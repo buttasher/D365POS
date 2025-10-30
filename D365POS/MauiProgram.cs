@@ -28,7 +28,6 @@ namespace D365POS
             builder.Services.AddTransient<SignInPage>();
             builder.Services.AddTransient<DashboardPage>();
             builder.Services.AddTransient<SalesPage>();
-            builder.Services.AddTransient<ShowJournalPage>();
 
             // ===========================
             // NoBorderEntry Handler Mapping

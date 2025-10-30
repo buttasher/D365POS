@@ -4,18 +4,25 @@
              xmlns:controls="clr-namespace:D365POS.Controls"
              Title="Sales">
 
-
     <Grid x:Name="MainContainer">
 
         <Grid x:Name="SalesContent" RowDefinitions="Auto,Auto,*" Padding="10">
 
+            <Frame HasShadow="True"
+                   CornerRadius="10"
+                   Padding="0"
+                   Margin="0,0,0,5">
 
-            <Entry x:Name="BarcodeEntry"
-                       Grid.Row="0"
-                       Placeholder="Scan or Search by barcode, ID, or item name"
-                       TextChanged="OnSearchTextChanged"
+                <Entry x:Name="BarcodeEntry"
+                       Placeholder="Scan or enter barcode"
                        HeightRequest="45"
-                       Margin="0,0,0,5"/>
+                       ReturnType="Done"
+                       Completed="OnBarcodeCompleted"
+                       TextChanged="BarcodeEntry_TextChanged"
+                       Margin="10,0"
+                       FontSize="16" />
+            </Frame>
+
 
             <Grid Grid.Row="2" ColumnDefinitions="5*,3*" Padding="0">
 
@@ -40,10 +47,11 @@
                                             SelectionChanged="OnProductSelectedFromList">
                                 <CollectionView.ItemTemplate>
                                     <DataTemplate>
-                                        <Grid ColumnDefinitions="*,4*,*,*,*" Padding="5" BackgroundColor="{Binding IsVoid, Converter={StaticResource BoolToGrayConverter}}">
+                                        <Grid ColumnDefinitions="*,4*,*,*,*" Padding="5" 
+                                              BackgroundColor="{Binding IsVoid, Converter={StaticResource BoolToGrayConverter}}">
                                             <Label Text="{Binding ItemBarCode}" Grid.Column="0"/>
                                             <Label Text="{Binding Description}" Grid.Column="1"/>
-                                            <Label Text="{Binding Quantity}" Grid.Column="2"/>
+                                            <Label Text="{Binding Quantity, StringFormat='{0:N3}'}" Grid.Column="2"/>
                                             <Label Text="{Binding UnitId}" Grid.Column="3"/>
                                             <Label Text="{Binding Total, StringFormat='{0:N3}'}" Grid.Column="4"/>
                                         </Grid>
@@ -101,9 +109,8 @@
                         <Button Grid.Row="2" Grid.Column="1" Text="View reports" BackgroundColor="#A66E43" HeightRequest="60"/>
                         <Button Grid.Row="3" Grid.Column="0" Text="Suspend transaction" BackgroundColor="#A66E43" HeightRequest="60"/>
                         <Button Grid.Row="3" Grid.Column="1" Text="Void payment" BackgroundColor="#A66E43" HeightRequest="60"/>
-                        <Button Grid.Row="4" Grid.Column="0" Text="Price check" BackgroundColor="#A66E43" HeightRequest="60"/>
+                        <Button Grid.Row="4" Grid.Column="0" Text="Search Product" BackgroundColor="#A66E43" HeightRequest="60" Clicked="OnSearchProductlicked"/>
                         <Button Grid.Row="4" Grid.Column="1" Text="Recall transaction" BackgroundColor="#A66E43" HeightRequest="60"/>
-
                     </Grid>
 
                     <!-- Payment Buttons -->
@@ -121,48 +128,6 @@
             </Grid>
         </Grid>
 
-        <!-- ======================================== -->
-        <!-- 2️⃣ FULL-SCREEN SEARCH OVERLAY -->
-        <!-- ======================================== -->
-        <Grid x:Name="SearchOverlay"
-              IsVisible="{Binding IsSearchListVisible}"
-              Padding="10,60,10,10"
-              RowDefinitions="Auto,*"
-              VerticalOptions="Start"
-              ZIndex="1">
-
-            <Frame CornerRadius="10"
-                   Padding="5"
-                   HasShadow="True">
-
-                <CollectionView x:Name="SearchResultsList"
-                                ItemsSource="{Binding FilteredProducts}"
-                                SelectionMode="Single"
-                                SelectionChanged="OnProductSelected"
-                                HeightRequest="300">
-                    <CollectionView.Header>
-                        <Grid Padding="10" ColumnDefinitions="2*,*,*,Auto">
-                            <Label Text="Item Name" FontAttributes="Bold"/>
-                            <Label Text="Item Id" FontAttributes="Bold" Grid.Column="1"/>
-                            <Label Text="Barcode" FontAttributes="Bold" Grid.Column="2"/>
-                            <Label Text="Unit" FontAttributes="Bold" Grid.Column="3"/>
-                        </Grid>
-                    </CollectionView.Header>
-
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate>
-                            <Grid Padding="10" Margin="0,1" ColumnDefinitions="2*,*,*,Auto">
-                                <Label Text="{Binding Description}" />
-                                <Label Text="{Binding ItemId}" Grid.Column="1" />
-                                <Label Text="{Binding ItemBarCode}" Grid.Column="2" />
-                                <Label Text="{Binding UnitId}" Grid.Column="3" />
-                            </Grid>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
-            </Frame>
-        </Grid>
-        
         <!-- FULL SCREEN LOADER -->
         <Grid x:Name="loaderOverlay"
               IsVisible="False"

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="D365POS.SearchProductsPage"
+             Title="Search Products">
+
+    <VerticalStackLayout Padding="10" Spacing="10">
+
+        <!-- Search Entry -->
+        <Frame HasShadow="True"
+               CornerRadius="12"
+               Padding="8,5"
+               Margin="0,5">
+            <Entry x:Name="SearchEntry"
+                   Placeholder="Search products..."
+                   FontSize="16"
+                   TextChanged="OnSearchTextChanged"
+                   ClearButtonVisibility="WhileEditing"
+                   HorizontalOptions="Fill"/>
+        </Frame>
+
+        <!-- Suggestions -->
+        <Frame HasShadow="True"
+               CornerRadius="12"
+               Padding="0"
+               IsVisible="{Binding FilteredProducts.Count, Converter={StaticResource IntToBoolConverter}}"
+               BorderColor="#E0E0E0">
+
+            <CollectionView x:Name="ProductsListView"
+                            SelectionMode="Single"
+                            ItemsSource="{Binding FilteredProducts}"
+                            SelectionChanged="OnProductSelected"
+                            Margin="0">
+
+                <!-- Column Header -->
+                <CollectionView.Header>
+                    <Grid ColumnDefinitions="2.5*,1.2*,2*,0.8*" 
+                          Padding="10,15">
+                        <Label Text="Description" Grid.Column="0" FontAttributes="Bold" FontSize="14"/>
+                        <Label Text="Item ID" Grid.Column="1" FontAttributes="Bold" FontSize="14"/>
+                        <Label Text="Barcode" Grid.Column="2" FontAttributes="Bold" FontSize="14"/>
+                        <Label Text="Unit" Grid.Column="3" FontAttributes="Bold" FontSize="14"/>
+                    </Grid>
+                </CollectionView.Header>
+
+                <!-- Suggestion Rows -->
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Frame BorderColor="#E5E7EB"
+                               CornerRadius="0"
+                               Margin="0"
+                               Padding="10,8"
+                               HasShadow="False">
+                            <Grid ColumnDefinitions="2.5*,1.2*,2*,0.8*"
+                                  Padding="0,3">
+                                <Label Text="{Binding Description}"
+                                       FontSize="14"
+                                       VerticalOptions="Center"/>
+                                <Label Text="{Binding ItemId}"
+                                       Grid.Column="1"
+                                       FontSize="14"
+                                       VerticalOptions="Center"/>
+                                <Label Text="{Binding ItemBarCode}"
+                                       Grid.Column="2"
+                                       FontSize="14"
+                                       VerticalOptions="Center"/>
+                                <Label Text="{Binding UnitId}"
+                                       Grid.Column="3"
+                                       FontSize="14"
+                                       VerticalOptions="Center"/>
+                            </Grid>
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </Frame>
+
+    </VerticalStackLayout>
+</ContentPage>

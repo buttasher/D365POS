@@ -19,7 +19,7 @@ namespace D365POS
     [QueryProperty(nameof(ReturnLines), "ReturnLines")]
     public partial class SalesPage : ContentPage
     {
-
+        private readonly IServiceProvider _serviceProvider;
         private readonly DatabaseService _db;
         private List<StoreProducts> _allProducts;
         private List<StoreProductsUnit> _allUnits = new();
@@ -28,23 +28,13 @@ namespace D365POS
         public ObservableCollection<StoreProducts> FilteredProducts { get; set; }
         public ObservableCollection<StoreProducts> AddedProducts { get; set; }
         private StoreProducts _selectedProduct;
-
+        private CancellationTokenSource _searchDelayCts;
         public bool IsReturn { get; set; } = false;
         public int ReturnTransactionId { get; set; } = 0;
         public List<POSRetailTransactionSalesTrans> ReturnLines { get; set; }
 
         private bool _returnLinesInitialized = false;
 
-        private bool _isSearchListVisible;
-        public bool IsSearchListVisible
-        {
-            get => _isSearchListVisible;
-            set
-            {
-                _isSearchListVisible = value;
-                OnPropertyChanged(nameof(IsSearchListVisible));
-            }
-        }
    
         private decimal _paymentAmount;
         public decimal PaymentAmount
@@ -177,7 +167,35 @@ namespace D365POS
                 await DisplayAlert("Error", $"Failed to load return lines: {ex.Message}", "OK");
             }
         }
+        private async void OnSearchProductlicked(object sender, EventArgs e)
+        {
+            loaderOverlay.IsVisible = true;
+            activityIndicator.IsRunning = true;
+            await Task.Delay(100);
 
+            try
+            {
+                // ✅ Pass callback so selected product comes back here
+                await Navigation.PushAsync(new SearchProductsPage(_db, OnProductSelectedFromSearch));
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Error", $"Failed to navigate to Search Page: {ex.Message}", "OK");
+            }
+            finally
+            {
+                loaderOverlay.IsVisible = false;
+                activityIndicator.IsRunning = false;
+            }
+        }
+        private void OnProductSelectedFromSearch(StoreProducts selectedProduct)
+        {
+            if (selectedProduct == null)
+                return;
+
+            // Default quantity = 1
+            AddProductToTable(selectedProduct);
+        }
         private void OnProductSelectedFromList(object sender, SelectionChangedEventArgs e)
         {
             _selectedProduct = e.CurrentSelection.FirstOrDefault() as StoreProducts;
@@ -189,66 +207,139 @@ namespace D365POS
             TotalTax = activeProducts.Sum(p => p.TaxAmount);
             TotalSubtotal = activeProducts.Sum(p => p.Subtotal);
         }
-        private async void OnSearchTextChanged(object sender, TextChangedEventArgs e)
+        // Auto-detect barcode scanner input
+        private async void BarcodeEntry_TextChanged(object sender, TextChangedEventArgs e)
         {
-            string newText = e.NewTextValue?.Trim();
-
-            if (string.IsNullOrWhiteSpace(newText))
-            {
-                IsSearchListVisible = false;
+            if (string.IsNullOrWhiteSpace(e.NewTextValue))
                 return;
-            }
 
-            // Apply filter for UI display
-            ApplyFilter(newText);
+            string company = Preferences.Get("Company", string.Empty);
 
-            // If only ONE product matches — it’s a direct barcode scan
-            if (FilteredProducts.Count == 1)
+            // Detect fast barcode paste (scanners input entire code at once)
+            if (e.NewTextValue.Length >= 8 &&
+                e.NewTextValue.Length - (e.OldTextValue?.Length ?? 0) > 5)
             {
-                var product = FilteredProducts.First();
-                AddProductToTable(product);
+                var barcode = e.NewTextValue.Trim();
+                await HandleBarcodeAsync(barcode);
+            }
+        }
 
-                // Hide suggestions and clear entry
-                IsSearchListVisible = false;
+        // Manual entry (user presses Enter)
+        private async void OnBarcodeCompleted(object sender, EventArgs e)
+        {
+            string barcode = BarcodeEntry.Text?.Trim();
+            string company = Preferences.Get("Company", string.Empty);
+            await HandleBarcodeAsync(barcode);
+        }
+
+        // Main logic used by both scanner & manual typing
+        private async Task HandleBarcodeAsync(string barcode)
+        {
+            if (string.IsNullOrWhiteSpace(barcode))
+                return;
+
+            try
+            {
+                // 1️⃣ Try direct product match first
+                var directProduct = _allProducts.FirstOrDefault(p =>
+                    p.ItemBarCode == barcode ||
+                    p.ItemId == barcode);
+
+                if (directProduct != null)
+                {
+                    AddProductToTable(directProduct);
+                    return;
+                }
+
+                // 2Try decoding via mask logic
+                var allMasks = await _db.GetAllMasksAsync();
+                var matchedMask = allMasks.FirstOrDefault(m =>
+                    barcode.StartsWith(m.Prefix.ToString()) && barcode.Length == m.Length);
+
+                if (matchedMask == null)
+                {
+                    await DisplayAlert("Not Found", $"No product or mask match for barcode: {barcode}", "OK");
+                    return;
+                }
+
+                int prefix = matchedMask.Prefix;
+                int productLength = matchedMask.Length;
+                string prefixStr = prefix.ToString();
+
+               
+                var maskLines = await _db.GetAllMasksSegmentAsync(x => x.BarcodeMasksId == matchedMask.BarcodeMasksId);
+                var productSegment = maskLines.FirstOrDefault(x =>
+                    x.Type.Equals("Product", StringComparison.OrdinalIgnoreCase));
+
+                var priceSegment = maskLines.FirstOrDefault(x =>
+                    x.Type.Equals("Price", StringComparison.OrdinalIgnoreCase));
+
+                if (productSegment != null)
+                {
+                    int productSegmentLength = productSegment.Length;
+                    string pluCode = barcode.Substring(prefixStr.Length, productSegmentLength);
+
+                    var product = await _db.GetProductByPLUAsync(pluCode);
+
+                    if (product != null)
+                    {
+                        var unitInfo = _allUnits.FirstOrDefault(u => u.ItemId == product.ItemId && u.UnitId == product.UnitId);
+                        decimal unitPrice = unitInfo?.UnitPrice ?? 0;
+                        decimal quantity = 1;
+
+                        if (priceSegment != null)
+                        {
+                            int priceStartIndex = prefixStr.Length + productSegmentLength;
+                            int priceLength = priceSegment.Length;
+
+                            string priceStr = barcode.Substring(priceStartIndex, priceLength);
+
+                            // Handle decimal places
+                            int decimalCount = 0;
+
+                            // Case 1: if Decimals is numeric (e.g., 2)
+                            if (priceSegment.Decimals is decimal decValue)
+                            {
+                                decimalCount = (int)decValue;
+                            }
+                            // Apply decimal placement if we have decimal info
+                            if (decimalCount > 0)
+                            {
+                                if (priceStr.Length > decimalCount)
+                                {
+                                    int integerPartLength = priceStr.Length - decimalCount;
+                                    priceStr = priceStr.Insert(integerPartLength, ".");
+                                }
+                                else
+                                {
+                                    priceStr = "0." + priceStr.PadLeft(decimalCount, '0');
+                                }
+                            }
+
+                            // Parse and calculate quantity
+                            if (decimal.TryParse(priceStr, out decimal totalPrice) && unitPrice > 0)
+                            {
+                                quantity = totalPrice / unitPrice;
+                            }
+                        }
+
+                        AddProductToTable(product, quantity);
+                    }
+                }
+                else
+                {
+                    await DisplayAlert("Invalid Mask", $"No product segment defined for mask {matchedMask.BarcodeMasksId}.", "OK");
+                }
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Error", ex.Message, "OK");
+            }
+            finally
+            {
+                // Always reset entry after processing
                 BarcodeEntry.Text = string.Empty;
                 BarcodeEntry.Focus();
-            }
-            else
-            {
-                // Show suggestion overlay for manual selection
-                IsSearchListVisible = FilteredProducts.Any();
-            }
-        }
-
-        private void ApplyFilter(string keyword)
-        {
-            keyword = keyword?.ToLower() ?? string.Empty;
-
-            var filtered = _allProducts
-                .Where(p => p.Description.ToLower().Contains(keyword)
-                         || p.ItemBarCode.ToLower().Contains(keyword)
-                         || p.ItemId.ToLower().Contains(keyword))
-                .ToList();
-
-            FilteredProducts.Clear();
-            foreach (var item in filtered)
-                FilteredProducts.Add(item);
-        }
-
-        private void OnProductSelected(object sender, SelectionChangedEventArgs e)
-        {
-            if (e.CurrentSelection.FirstOrDefault() is StoreProducts selectedProduct)
-            {
-                AddProductToTable(selectedProduct);
-
-                // Hide overlay
-                IsSearchListVisible = false;
-
-                // Clear search bar but keep visible
-                BarcodeEntry.Text = string.Empty;
-
-                // Deselect item
-                SearchResultsList.SelectedItem = null;
             }
         }
         private void AddProductToTable(StoreProducts product, decimal quantity = 1)
@@ -317,6 +408,7 @@ namespace D365POS
             }
             
         }
+
         private void PrintReceipt(string storeId, string cashier, string receiptId, decimal total, decimal totalTax, string payment, decimal totalWithoutVAT)
         {
             string printerName = "EPSON TM-T82 Receipt";
@@ -353,13 +445,15 @@ namespace D365POS
             // Items
             foreach (var p in activeProducts)
             {
+                decimal quantity = Math.Round(p.Quantity, 3);
+                decimal totalamt = Math.Round(p.Total, 3);
                 var wrappedNameLines = WrapText(p.Description, itemWidth).ToList();
                 for (int i = 0; i < wrappedNameLines.Count; i++)
                 {
                     string itemName = AlignText(wrappedNameLines[i], itemWidth, "left");
-                    string qty = i == 0 ? AlignText(p.Quantity.ToString(), qtyWidth, "center") : AlignText("", qtyWidth, "center");
+                    string qty = i == 0 ? AlignText(quantity.ToString(), qtyWidth, "center") : AlignText("", qtyWidth, "center");
                     string price = i == 0 ? AlignText(p.UnitPrice.ToString("F2"), priceWidth, "center") : AlignText("", priceWidth, "center");
-                    string amt = i == 0 ? AlignText(p.Total.ToString("F2"), amtWidth, "right") : AlignText("", amtWidth, "right");
+                    string amt = i == 0 ? AlignText(totalamt.ToString("F2"), amtWidth, "right") : AlignText("", amtWidth, "right");
 
                     receipt += $"{itemName}{qty}{price}{amt}\n";
                 }
@@ -423,6 +517,8 @@ namespace D365POS
                 var page = document.AddPage();
                 XGraphics gfx = XGraphics.FromPdfPage(page);
                 XFont font = new XFont("Courier New", 10, XFontStyle.Regular);
+
+                string logoPath = Path.Combine(FileSystem.AppDataDirectory, "logo.png");
 
                 double y = 20;
                 double lineHeight = 14;
@@ -646,7 +742,7 @@ namespace D365POS
                 decimal totalTax = 0m;
                 decimal totalExcludingVAT = 0m;
 
-                decimal unitPrice = activeProducts.ToString() != null ? activeProducts.Sum(p => p.UnitPrice) : 0m;
+                decimal unitPrice = activeProducts.Sum(p => Math.Round(p.Total, 3));
 
                 // Calculate totals considering tax
                 foreach (var p in activeProducts)
@@ -657,18 +753,22 @@ namespace D365POS
                     {
                         taxAmount = Math.Round(p.Total - (p.Total / (1 + p.TaxFactor)), 3);
                         netAmount = Math.Round(p.Total / (1 + p.TaxFactor), 3);
-                        total = p.Total;
+                        total = Math.Round(p.Total, 3);
                     }
                     else // Price does not include tax
                     {
                         taxAmount = Math.Round(p.Total * p.TaxFactor, 3);
-                        netAmount = p.Total;
-                        total = p.Total + taxAmount;
+                        netAmount = Math.Round(p.Total, 3);
+                        total = Math.Round(p.Total + taxAmount, 3);
                     }
-                    totalExcludingVAT += netAmount;
-                    totalAmount += total;
-                    totalTax += taxAmount;
+                    totalExcludingVAT = Math.Round(totalExcludingVAT + netAmount, 3);
+                    totalAmount = Math.Round(totalAmount + total, 3);
+                    totalTax = Math.Round(totalTax + taxAmount, 3);
                 }
+                // Final rounding for totals before using them
+                totalAmount = Math.Round(totalAmount, 3);
+                totalTax = Math.Round(totalTax, 3);
+                totalExcludingVAT = Math.Round(totalExcludingVAT, 3);
 
                 // Create sale DTO using only active products
                 var saleItem = new RecordSalesService.SaleItemDto
@@ -695,7 +795,7 @@ namespace D365POS
                         new RecordSalesService.TaxDto
                         {
                             TaxName = "VAT",
-                            TaxRate = (double)(activeProducts.FirstOrDefault()?.TaxFactor ?? 0.05m),
+                            TaxRate = Math.Round((double)(activeProducts.FirstOrDefault()?.TaxFactor ?? 0.05m), 3),
                             TaxValue =  Math.Round(totalTax,3)
                         }
                     },
@@ -703,10 +803,10 @@ namespace D365POS
                     {
                         ItemId = p.ItemId,
                         UnitId = p.UnitId,
-                        UnitPrice = p.Total,
-                        Qty = (int)p.Quantity,
-                        LineAmount = p.Total,
-                        TaxAmount = p.TaxAmount,
+                        UnitPrice = Math.Round(p.Total, 3),
+                        Qty = Math.Round(p.Quantity, 3),
+                        LineAmount = Math.Round(p.Total, 3),
+                        TaxAmount = Math.Round(p.TaxAmount, 3),
                         Action = 2,
                         ActionDateTime = DateTime.Now
                     }).ToList()
