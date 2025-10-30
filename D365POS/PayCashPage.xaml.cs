@@ -37,15 +37,34 @@ namespace D365POS
                 if (PaymentEntry.Text == "0")
                     PaymentEntry.Text = string.Empty;
 
-                // Prevent duplicate operators
-                if ("+-*/".Contains(value))
+                // Handle + or - press for instant calculation
+                if (value == "+" || value == "-")
                 {
-                    if (PaymentEntry.Text.EndsWith("+") || PaymentEntry.Text.EndsWith("-") ||
-                        PaymentEntry.Text.EndsWith("*") || PaymentEntry.Text.EndsWith("/"))
-                        return; // skip duplicate operator
+                    if (decimal.TryParse(PaymentEntry.Text, out decimal currentValue))
+                    {
+                        // Store last entered value if needed later (optional)
+                    }
+
+                    // If entry already contains + or -, split and calculate
+                    if (PaymentEntry.Text.Contains("+") || PaymentEntry.Text.Contains("-"))
+                    {
+                        try
+                        {
+                            var resultObj = new System.Data.DataTable().Compute(PaymentEntry.Text, "");
+                            PaymentEntry.Text = Convert.ToDecimal(resultObj).ToString("N0");
+                        }
+                        catch
+                        {
+                            PaymentEntry.Text = "0";
+                        }
+                    }
+
+                    // Append + or - for next entry
+                    PaymentEntry.Text += value;
+                    return;
                 }
 
-                // Only one decimal per number group
+                // Only one decimal per number
                 if (value == "." && PaymentEntry.Text.EndsWith("."))
                     return;
 
@@ -67,27 +86,50 @@ namespace D365POS
         {
             try
             {
-                string expression = PaymentEntry.Text;
-
-                if (string.IsNullOrWhiteSpace(expression))
+                if (string.IsNullOrWhiteSpace(PaymentEntry.Text))
                 {
                     await DisplayAlert("Error", "Please enter an amount.", "OK");
                     return;
                 }
 
-                // Evaluate the arithmetic expression (like calculator)
-                var resultObj = new DataTable().Compute(expression, "");
-                decimal result = Convert.ToDecimal(resultObj);
+                // Compute + or - operations before validating
+                decimal payment;
+                try
+                {
+                    var resultObj = new System.Data.DataTable().Compute(PaymentEntry.Text, "");
+                    payment = Convert.ToDecimal(resultObj);
+                }
+                catch
+                {
+                    await DisplayAlert("Error", "Invalid amount entered.", "OK");
+                    return;
+                }
 
-                // Show result in the entry field too
-                PaymentEntry.Text = result.ToString("N2");
+                if (payment < _amountDue)
+                {
+                    await DisplayAlert("Error", "Entered amount cannot be smaller than amount due.", "OK");
+                    return;
+                }
+
+                decimal newAmountDue = payment - _amountDue;
+
+                var navParams = new Dictionary<string, object>
+                {
+                    { "PaymentAmount", payment },
+                    { "NewAmountDue", newAmountDue }
+                };
+
+                await Shell.Current.GoToAsync("..", navParams);
+
+                var popup = new ConfirmationPopup();
+                await this.ShowPopupAsync(popup);
             }
-            catch
+            catch (Exception ex)
             {
-                await DisplayAlert("Error", "Invalid input. Please enter a valid amount or expression.", "OK");
-                PaymentEntry.Text = "0";
+                await DisplayAlert("Error", $"Something went wrong: {ex.Message}", "OK");
             }
         }
+
         private async void OnDenominationClicked(object sender, EventArgs e)
         {
             if (sender is Button button)

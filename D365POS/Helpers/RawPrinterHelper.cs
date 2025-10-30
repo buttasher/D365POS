@@ -69,5 +69,27 @@ namespace D365POS.Helpers
 
             return success;
         }
+        public static bool SendimageToPrinter(string printerName, byte[] bytes)
+        {
+            if (!OpenPrinter(printerName.Normalize(), out IntPtr hPrinter, IntPtr.Zero))
+                return false;
+
+            DOCINFOA di = new DOCINFOA { pDocName = "Receipt Print", pDataType = "RAW" };
+
+            StartDocPrinter(hPrinter, 1, di);
+            StartPagePrinter(hPrinter);
+
+            IntPtr unmanagedBytes = Marshal.AllocCoTaskMem(bytes.Length);
+            Marshal.Copy(bytes, 0, unmanagedBytes, bytes.Length);
+
+            bool success = WritePrinter(hPrinter, unmanagedBytes, bytes.Length, out _);
+
+            EndPagePrinter(hPrinter);
+            EndDocPrinter(hPrinter);
+            ClosePrinter(hPrinter);
+            Marshal.FreeCoTaskMem(unmanagedBytes);
+
+            return success;
+        }
     }
 }

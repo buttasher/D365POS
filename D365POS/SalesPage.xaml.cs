@@ -7,7 +7,7 @@ using System.Collections.ObjectModel;
 using System.Data;
 using PdfSharpCore.Drawing;
 using PdfSharpCore.Pdf;
-using System.IO;
+using SkiaSharp;
 
 
 namespace D365POS
@@ -31,11 +31,12 @@ namespace D365POS
         private CancellationTokenSource _searchDelayCts;
         public bool IsReturn { get; set; } = false;
         public int ReturnTransactionId { get; set; } = 0;
+        private bool _cameFromSearch = false;
         public List<POSRetailTransactionSalesTrans> ReturnLines { get; set; }
 
         private bool _returnLinesInitialized = false;
+        private bool _cameFromPayCash = false;
 
-   
         private decimal _paymentAmount;
         public decimal PaymentAmount
         {
@@ -55,16 +56,22 @@ namespace D365POS
             {
                 _newAmountDue = value;
                 AmountDueLabel.Text = value.ToString("F3");
-                MainThread.BeginInvokeOnMainThread(async () =>
-                {
-                    bool confirmed = await ShowConfirmationPopup(_paymentAmount, _newAmountDue);
 
-                    if (confirmed)
+                // Only trigger popup if returning from PayCashPage
+                if (_cameFromPayCash)
+                {
+                    _cameFromPayCash = false; // reset after use
+
+                    MainThread.BeginInvokeOnMainThread(async () =>
                     {
-                        // Call your API after user confirms
-                        await RecordSaleAsync("Cash");
-                    }
-                });
+                        bool confirmed = await ShowConfirmationPopup(_paymentAmount, _newAmountDue);
+
+                        if (confirmed)
+                        {
+                            await RecordSaleAsync("Cash");
+                        }
+                    });
+                }
             }
         }
 
@@ -114,15 +121,35 @@ namespace D365POS
         {
             base.OnAppearing();
 
-            _allProducts = await _db.GetAllProducts();
-            _allUnits = await _db.GetAllProductsUnit();
+            // Load static data only once
+            if (_allProducts == null || !_allProducts.Any())
+                _allProducts = await _db.GetAllProducts();
 
+            if (_allUnits == null || !_allUnits.Any())
+                _allUnits = await _db.GetAllProductsUnit();
 
+            // Handle return logic
             if (IsReturn && ReturnTransactionId != 0 && !_returnLinesInitialized)
             {
                 await InitializeReturnLines();
-                _returnLinesInitialized = true; // mark as initialized
+                _returnLinesInitialized = true;
             }
+
+            
+            if (_cameFromSearch)
+            {
+                ResetPaymentSummary();
+                _cameFromSearch = false; // reset flag
+            }
+        }
+
+        private void ResetPaymentSummary()
+        {
+            PaymentAmount = 0;
+            NewAmountDue = 0;
+
+            PaymentLabel.Text = "0.000";
+            AmountDueLabel.Text = "0.000";
         }
         private async Task InitializeReturnLines()
         {
@@ -167,6 +194,23 @@ namespace D365POS
                 await DisplayAlert("Error", $"Failed to load return lines: {ex.Message}", "OK");
             }
         }
+        private void ResetTransactionUI()
+        {
+            AddedProducts.Clear();
+
+            TotalTax = 0;
+            TotalSubtotal = 0;
+
+            PaymentAmount = 0;
+            NewAmountDue = 0;
+
+            PaymentLabel.Text = "0.000";
+            AmountDueLabel.Text = "0.000";
+
+            IsReturn = false;
+            ReturnTransactionId = 0;
+            _returnLinesInitialized = false;
+        }
         private async void OnSearchProductlicked(object sender, EventArgs e)
         {
             loaderOverlay.IsVisible = true;
@@ -175,7 +219,7 @@ namespace D365POS
 
             try
             {
-                // ✅ Pass callback so selected product comes back here
+                _cameFromSearch = true; // Mark that we’re going to search page
                 await Navigation.PushAsync(new SearchProductsPage(_db, OnProductSelectedFromSearch));
             }
             catch (Exception ex)
@@ -372,9 +416,230 @@ namespace D365POS
 
         private async void OnPayCashClicked(object sender, EventArgs e)
         {
-            var totalAmount = AddedProducts.Sum(p => p.Total);
-            await Shell.Current.GoToAsync($"{nameof(PayCashPage)}?AmountDue={TotalSubtotal}");
+            _cameFromPayCash = true;
+
+            var amountDue = TotalSubtotal + TotalTax;
+
+            await Shell.Current.GoToAsync(nameof(PayCashPage), new Dictionary<string, object>
+            {
+                { "AmountDue", amountDue.ToString() }
+            });
+           
         }
+        private byte[] ConvertImageToEscPos(string imagePath, int maxWidth = 400)
+
+        {
+
+            using var input = File.OpenRead(imagePath);
+
+            using var original = SKBitmap.Decode(input);
+
+            if (original == null)
+
+                throw new FileNotFoundException("Could not decode image", imagePath);
+
+            // Resize keeping aspect ratio
+
+            int targetWidth = Math.Min(maxWidth, original.Width);
+
+            float scale = (float)targetWidth / original.Width;
+
+            int targetHeight = (int)Math.Round(original.Height * scale);
+
+            using var resized = original.Resize(new SKImageInfo(targetWidth, targetHeight), SKFilterQuality.High);
+
+            if (resized == null)
+
+                throw new Exception("Resize failed");
+
+            int width = resized.Width;
+
+            int height = resized.Height;
+
+            float[,] gray = new float[height, width];
+
+            for (int y = 0; y < height; y++)
+
+            {
+
+                for (int x = 0; x < width; x++)
+
+                {
+
+                    var c = resized.GetPixel(x, y);
+
+                    if (c.Alpha < 128)
+
+                    {
+
+                        gray[y, x] = 255; // transparent pixel = white
+
+                        continue;
+
+                    }
+
+                    gray[y, x] = (0.299f * c.Red + 0.587f * c.Green + 0.114f * c.Blue);
+
+                }
+
+            }
+
+            // Floyd–Steinberg dithering
+
+            for (int y = 0; y < height; y++)
+
+            {
+
+                for (int x = 0; x < width; x++)
+
+                {
+
+                    float oldPixel = gray[y, x];
+
+                    float newPixel = oldPixel < 140f ? 0f : 255f;
+
+                    float err = oldPixel - newPixel;
+
+                    gray[y, x] = newPixel;
+
+                    if (x + 1 < width) gray[y, x + 1] += err * 7f / 16f;
+
+                    if (y + 1 < height)
+
+                    {
+
+                        if (x - 1 >= 0) gray[y + 1, x - 1] += err * 3f / 16f;
+
+                        gray[y + 1, x] += err * 5f / 16f;
+
+                        if (x + 1 < width) gray[y + 1, x + 1] += err * 1f / 16f;
+
+                    }
+
+                }
+
+            }
+
+            using var ms = new MemoryStream();
+
+            // 🔹 Initialize printer
+
+            ms.Write(new byte[] { 0x1B, 0x40 }, 0, 2);
+
+            // 🔹 Set alignment to CENTER
+
+            ms.Write(new byte[] { 0x1B, 0x61, 0x01 }, 0, 3); // ESC a 1 = center align
+
+            // 🔹 Set line spacing
+
+            ms.Write(new byte[] { 0x1B, 0x33, 24 }, 0, 3);
+
+            for (int y = 0; y < height; y += 24)
+
+            {
+
+                ms.Write(new byte[] { 0x1B, 0x2A, 33, (byte)(width % 256), (byte)(width / 256) }, 0, 5);
+
+                for (int x = 0; x < width; x++)
+
+                {
+
+                    for (int k = 0; k < 3; k++)
+
+                    {
+
+                        byte slice = 0;
+
+                        for (int b = 0; b < 8; b++)
+
+                        {
+
+                            int yPos = y + (k * 8) + b;
+
+                            if (yPos >= height)
+
+                                continue;
+
+                            bool isBlack = gray[yPos, x] < 128f;
+
+                            if (isBlack)
+
+                                slice |= (byte)(1 << (7 - b));
+
+                        }
+
+                        ms.WriteByte(slice);
+
+                    }
+
+                }
+
+                ms.WriteByte(0x0A); // line feed
+
+            }
+
+            // 🔹 Reset alignment to LEFT
+
+            ms.Write(new byte[] { 0x1B, 0x61, 0x00 }, 0, 3);
+
+            // 🔹 Feed few lines after image
+
+            ms.Write(new byte[] { 0x1B, 0x64, 3 }, 0, 3);
+
+            return ms.ToArray();
+
+        }
+        public void generateBarcode(string _printerName, string _receipt)
+
+        {
+
+            var center = new byte[] { 0x1B, 0x61, 0x01 };
+
+            // HRI (Human Readable Interpretation) position: GS H 2 (below)
+
+            var hriBelow = new byte[] { 0x1D, 0x48, 0x02 };
+
+            // Barcode height: GS h 80 (0x50)
+
+            var barHeight = new byte[] { 0x1D, 0x68, 0x50 };
+
+            // Module width: GS w 2 (n=2..6; adjust per printer)
+
+            var barWidth = new byte[] { 0x1D, 0x77, 0x02 };
+
+            // ESC/POS Code128 (function 73): GS k 73 n [data...]
+
+            // We’ll encode with Code Set B by prefixing "{B"
+
+            string barcodeData = "{B" + _receipt; // e.g., receiptId "RCPT-000123"
+
+            byte[] dataBytes = System.Text.Encoding.ASCII.GetBytes(barcodeData);
+
+            byte[] header = new byte[] { 0x1D, 0x6B, 73, (byte)dataBytes.Length };
+
+            // Build packet
+
+            var bytes = new List<byte>();
+
+            bytes.AddRange(center);
+
+            bytes.AddRange(hriBelow);
+
+            bytes.AddRange(barHeight);
+
+            bytes.AddRange(barWidth);
+
+            bytes.AddRange(header);
+
+            bytes.AddRange(dataBytes);
+
+            // Send to printer
+
+            RawPrinterHelper.SendimageToPrinter(_printerName, bytes.ToArray());
+
+        }
+
+
         private async void OnPayQuickCashClicked(object sender, EventArgs e)
         {
             await RecordSaleAsync("Cash");
@@ -413,6 +678,9 @@ namespace D365POS
         {
             string printerName = "EPSON TM-T82 Receipt";
             string receipt = "";
+            
+            byte[] logoBytes = ConvertImageToEscPos("C:\\Users\\moham\\source\\repos\\D365POS\\D365POS\\Resources\\Images\\logo.png");
+            RawPrinterHelper.SendimageToPrinter(printerName, logoBytes);
 
             receipt += "\x1B\x40"; // ESC @ Initialize printer
             receipt += AlignText("Tax Invoice", 48, "center") + "\n";
@@ -425,9 +693,11 @@ namespace D365POS
             int priceWidth = 10;
             int amtWidth = 10;
             int receiptWidth = 48;
+            string NTN = "OM1100058422";
 
             // Receipt Info
             receipt += AlignText($"Receipt No: {receiptId}", receiptWidth, "left") + "\n";
+            receipt += AlignText($"NTN: {NTN}", receiptWidth, "left") + "\n";
             receipt += AlignText($"Store Id: {storeId}", receiptWidth, "left") + "\n";
             receipt += AlignText($"Cashier Id: {cashier}", receiptWidth, "left") + "\n";
             receipt += AlignText($"Date: {DateTime.Now:dd-MM-yyyy}", receiptWidth, "right") + "\n";
@@ -480,12 +750,14 @@ namespace D365POS
             receipt += AlignText("Item should be returned in original packaging.", receiptWidth, "left") + "\n";
             receipt += "\n" + AlignText("Thank you for shopping!", receiptWidth, "center") + "\n\n";
 
-            receipt += "\x1D\x56\x42\x03"; // GS V B 3 Cut paper
+          //  receipt += "\x1D\x56\x42\x03"; // GS V B 3 Cut paper
 
           
             string pdfPath = GenerateReceiptPDF(receiptId, receipt);
 
             RawPrinterHelper.SendStringToPrinter(printerName, receipt);
+            generateBarcode(printerName, receiptId);
+            RawPrinterHelper.SendStringToPrinter(printerName, "\x1D\x56\x42\x03");
 
             try
             {
@@ -884,8 +1156,8 @@ namespace D365POS
                     // Print receipt
                     PrintReceipt(storeId, cashier, saleItem.ReceiptId, totalAmount, totalTax, paymentMethodId, totalExcludingVAT);
 
-                    // Reset UI
-                    AddedProducts.Clear();
+                    //Reset everything after the transaction completes
+                    ResetTransactionUI();
                 }
                 else
                 {
