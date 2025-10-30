@@ -26,10 +26,13 @@
                IsVisible="{Binding FilteredProducts.Count, Converter={StaticResource IntToBoolConverter}}"
                BorderColor="#E0E0E0">
 
+            <!-- ✅ Give CollectionView a fixed scrollable height -->
             <CollectionView x:Name="ProductsListView"
                             SelectionMode="Single"
                             ItemsSource="{Binding FilteredProducts}"
                             SelectionChanged="OnProductSelected"
+                            HeightRequest="400" 
+                            VerticalScrollBarVisibility="Always"
                             Margin="0">
 
                 <!-- Column Header -->
@@ -53,21 +56,10 @@
                                HasShadow="False">
                             <Grid ColumnDefinitions="2.5*,1.2*,2*,0.8*"
                                   Padding="0,3">
-                                <Label Text="{Binding Description}"
-                                       FontSize="14"
-                                       VerticalOptions="Center"/>
-                                <Label Text="{Binding ItemId}"
-                                       Grid.Column="1"
-                                       FontSize="14"
-                                       VerticalOptions="Center"/>
-                                <Label Text="{Binding ItemBarCode}"
-                                       Grid.Column="2"
-                                       FontSize="14"
-                                       VerticalOptions="Center"/>
-                                <Label Text="{Binding UnitId}"
-                                       Grid.Column="3"
-                                       FontSize="14"
-                                       VerticalOptions="Center"/>
+                                <Label Text="{Binding Description}" FontSize="14" VerticalOptions="Center"/>
+                                <Label Text="{Binding ItemId}" Grid.Column="1" FontSize="14" VerticalOptions="Center"/>
+                                <Label Text="{Binding ItemBarCode}" Grid.Column="2" FontSize="14" VerticalOptions="Center"/>
+                                <Label Text="{Binding UnitId}" Grid.Column="3" FontSize="14" VerticalOptions="Center"/>
                             </Grid>
                         </Frame>
                     </DataTemplate>

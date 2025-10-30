@@ -84,4 +84,15 @@ public partial class DashboardPage : ContentPage
             await this.ShowPopupAsync(popup);
         }
     }
+    private async void OnAddPrinterNameClicked(object sender, EventArgs e)
+    {
+        string currentPrinter = Preferences.Get("PrinterName", "");
+        string result = await DisplayPromptAsync("Add Printer", "Enter your printer name:", initialValue: currentPrinter);
+
+        if (!string.IsNullOrWhiteSpace(result))
+        {
+            Preferences.Set("PrinterName", result);
+            await DisplayAlert("Success", $"Printer name '{result}' saved successfully.", "OK");
+        }
+    }
 }

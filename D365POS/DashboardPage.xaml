@@ -51,7 +51,7 @@
 
                     <!-- Row 1 -->
                     <Button Grid.Row="0" Grid.Column="0" Text="Open drawer" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
-                    <Button Grid.Row="0" Grid.Column="1" Text="Price check" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80" Clicked="OnPriceCheckClicked"/>
+                    <Button Grid.Row="0" Grid.Column="1" Text="Add Printer Name" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80" Clicked="OnAddPrinterNameClicked"/>
                     <Button Grid.Row="0" Grid.Column="2" Text="Tender declaration" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
                     <Button Grid.Row="0" Grid.Column="3" Text="Manage shifts" BackgroundColor="#A66E43" CornerRadius="8" HeightRequest="80"/>
 

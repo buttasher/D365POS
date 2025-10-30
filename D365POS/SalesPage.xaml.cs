@@ -674,12 +674,19 @@ namespace D365POS
             
         }
 
-        private void PrintReceipt(string storeId, string cashier, string receiptId, decimal total, decimal totalTax, string payment, decimal totalWithoutVAT)
+        private async Task<byte[]> GetLogoBytesAsync()
         {
-            string printerName = "EPSON TM-T82 Receipt";
+            using var stream = await FileSystem.OpenAppPackageFileAsync("logo.png");
+            using var memoryStream = new MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+            return memoryStream.ToArray();
+        }
+        private async Task PrintReceipt(string storeId, string cashier, string receiptId, decimal total, decimal totalTax, string payment, decimal totalWithoutVAT)
+        {
+            string printerName = Preferences.Get("PrinterName", "EPSON TM-T82 Receipt");
             string receipt = "";
-            
-            byte[] logoBytes = ConvertImageToEscPos("C:\\Users\\moham\\source\\repos\\D365POS\\D365POS\\Resources\\Images\\logo.png");
+
+            byte[] logoBytes = await GetLogoBytesAsync();
             RawPrinterHelper.SendimageToPrinter(printerName, logoBytes);
 
             receipt += "\x1B\x40"; // ESC @ Initialize printer
@@ -750,74 +757,14 @@ namespace D365POS
             receipt += AlignText("Item should be returned in original packaging.", receiptWidth, "left") + "\n";
             receipt += "\n" + AlignText("Thank you for shopping!", receiptWidth, "center") + "\n\n";
 
-          //  receipt += "\x1D\x56\x42\x03"; // GS V B 3 Cut paper
-
           
-            string pdfPath = GenerateReceiptPDF(receiptId, receipt);
 
             RawPrinterHelper.SendStringToPrinter(printerName, receipt);
             generateBarcode(printerName, receiptId);
             RawPrinterHelper.SendStringToPrinter(printerName, "\x1D\x56\x42\x03");
 
-            try
-            {
-                Launcher.OpenAsync(new OpenFileRequest
-                {
-                    File = new ReadOnlyFile(pdfPath)
-                });
-            }
-            catch { }
-            // 🔹 Step 4: Delete the PDF automatically after short delay
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    await Task.Delay(5000); // wait 5 seconds before deleting
-                    if (File.Exists(pdfPath))
-                        File.Delete(pdfPath);
-                }
-                catch { }
-            });
         }
-        private string GenerateReceiptPDF(string receiptId, string content)
-        {
-            string folderPath = FileSystem.AppDataDirectory;
-            string filePath = Path.Combine(folderPath, $"Receipt_{receiptId}.pdf");
-
-            using (PdfDocument document = new PdfDocument())
-            {
-                var page = document.AddPage();
-                XGraphics gfx = XGraphics.FromPdfPage(page);
-                XFont font = new XFont("Courier New", 10, XFontStyle.Regular);
-
-                string logoPath = Path.Combine(FileSystem.AppDataDirectory, "logo.png");
-
-                double y = 20;
-                double lineHeight = 14;
-
-                foreach (string line in content.Split('\n'))
-                {
-                    gfx.DrawString(line, font, XBrushes.Black, new XRect(20, y, page.Width - 40, lineHeight), XStringFormats.TopLeft);
-                    y += lineHeight;
-
-                    // Add new page if too long
-                    if (y > page.Height - 40)
-                    {
-                        page = document.AddPage();
-                        gfx = XGraphics.FromPdfPage(page);
-                        y = 20;
-                    }
-                }
-
-                using (var stream = File.Create(filePath))
-                {
-                    document.Save(stream, false);
-                }
-            }
-
-            return filePath;
-        }
-
+       
         private string AlignText(string text, int width, string align = "left", int leftMargin = 2)
         {
             text = text ?? "";
