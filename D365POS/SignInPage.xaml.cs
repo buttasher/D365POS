@@ -1,4 +1,5 @@
 using D365POS.Services;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Maui.Controls;
 using System;
 
@@ -85,6 +86,10 @@ namespace D365POS
                 activityIndicator.IsRunning = false;
                 SignInButton.IsEnabled = true;
             }
+        }
+        private async void OnConfigurationClicked(object sender, EventArgs e)
+        {
+            await Navigation.PushAsync(new ConfigurationPage());
         }
 
     }

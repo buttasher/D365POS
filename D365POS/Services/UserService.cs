@@ -8,6 +8,8 @@ namespace D365POS.Services
         private readonly AuthService _authService = new AuthService();
         private readonly HttpClient _client = new HttpClient();
 
+        private static string Resource => Preferences.Get("Resource", null);
+        private string _url => $"{Resource}/api/services/TBGetGlobalUserGroup/TBGetGlobalUserService/getUser";
         public async Task<SignInResponse> SignInAsync(string userId, string password, CancellationToken token = default)
         {
            
@@ -16,8 +18,6 @@ namespace D365POS.Services
                 // Step 1: Get access token
                 var accessToken = await _authService.GetAccessTokenAsync();
 
-                // Step 2: Build request
-                var url = "https://tbd365deve8cbf0eb94119fe1devaos.cloudax.uae.dynamics.com/api/services/TBGetGlobalUserGroup/TBGetGlobalUserService/getUser";
                 var payload = new
                 {
                     _userId = userId,
@@ -25,7 +25,7 @@ namespace D365POS.Services
                 };
 
                 var json = JsonSerializer.Serialize(payload);
-                var request = new HttpRequestMessage(HttpMethod.Post, url);
+                var request = new HttpRequestMessage(HttpMethod.Post, _url);
                 request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
                 request.Content = new StringContent(json, Encoding.UTF8, "application/json");
 

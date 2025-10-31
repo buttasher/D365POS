@@ -131,6 +131,14 @@
                         CornerRadius="5"
                         HeightRequest="50"
                         Clicked="OnSignInClicked"/>
+                <Button Text="Configuration"
+                        HeightRequest="45"
+                        FontAttributes="Bold"
+                        BackgroundColor="#1976D2"
+                        CornerRadius="5"
+                        ImageSource="link.png"
+                        ContentLayout="Left,10"
+                        Clicked="OnConfigurationClicked"/>
             </VerticalStackLayout>
         </Frame>
         

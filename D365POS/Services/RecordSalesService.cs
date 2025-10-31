@@ -8,9 +8,8 @@ namespace D365POS.Services
     {
         private readonly AuthService _authService = new AuthService();
         private readonly HttpClient _client = new HttpClient();
-
-        private readonly string _url =
-            "https://tbd365deve8cbf0eb94119fe1devaos.cloudax.uae.dynamics.com/api/services/TBInventoryServices/TBPOSOperationService/recordSales";
+        private static string Resource => Preferences.Get("Resource", null);
+        private string _url => $"{Resource}/api/services/TBInventoryServices/TBPOSOperationService/recordSales";
 
         public async Task<bool> RecordSalesAsync(string company, List<SaleItemDto> saleItems, CancellationToken token = default)
         {

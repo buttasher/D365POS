@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="D365POS.ConfigurationPage"
+             Title="Configuration">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="15">
+
+            <Label Text="Environment Configuration"
+                   FontAttributes="Bold"
+                   FontSize="22"/>
+
+            <!-- Environment URL -->
+            <Label Text="Environment URL"/>
+            <Entry x:Name="EnvironmentEntry"
+                   Placeholder="https://your-environment-url"
+                   Keyboard="Url"/>
+
+            <!-- Tenant ID (hidden) -->
+            <Label Text="Tenant ID"/>
+            <Entry x:Name="TenantEntry"
+                   Placeholder="Enter Tenant ID"
+                   IsPassword="True"/>
+
+            <!-- Client ID (hidden) -->
+            <Label Text="Client ID"/>
+            <Entry x:Name="ClientIdEntry"
+                   Placeholder="Enter Client ID"
+                   IsPassword="True"/>
+
+            <!-- Client Secret (hidden) -->
+            <Label Text="Client Secret"/>
+            <Entry x:Name="ClientSecretEntry"
+                   Placeholder="Enter Client Secret"
+                   IsPassword="True"/>
+
+            <Button Text="Save Configuration"
+                    BackgroundColor="#A66E43"
+                    FontAttributes="Bold"
+                    HeightRequest="50"
+                    Clicked="OnSaveClicked"/>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

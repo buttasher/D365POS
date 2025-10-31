@@ -8,8 +8,8 @@ namespace D365POS.Services
     {
         private readonly AuthService _authService = new AuthService();
         private readonly HttpClient _client = new HttpClient();
-
-        private readonly string _url = "https://tbd365deve8cbf0eb94119fe1devaos.cloudax.uae.dynamics.com/api/services/TBInventoryServices/TBPOSOperationService/getProductBarcodes";
+        private static string Resource => Preferences.Get("Resource", null);
+        private string _url => $"{Resource}/api/services/TBInventoryServices/TBPOSOperationService/getProductBarcodes";
         public async Task<List<MasksRequestResponse>?> GetMasksServiceAsync(string company, CancellationToken token = default)
         {
 

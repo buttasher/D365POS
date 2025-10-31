@@ -6,10 +6,10 @@ namespace D365POS.Services
 {
     public class AuthService
     {
-        private static readonly string TenantId = "1d30208b-6f34-41ab-be26-f8b037cded0c";
-        private static readonly string ClientId = "329ddef5-e60b-444b-b252-bafc7329bb42";
-        private static readonly string ClientSecret = "gwE8Q~dA3kTSwD1LSECijJFOuBMuyyoPAH8a_cPr"; 
-        private static readonly string Resource = "https://tbd365deve8cbf0eb94119fe1devaos.cloudax.uae.dynamics.com";
+        private static string TenantId => Preferences.Get("TenantId", null);
+        private static string ClientId => Preferences.Get("ClientId", null);
+        private static string ClientSecret => Preferences.Get("ClientSecret", null);
+        private static string Resource => Preferences.Get("Resource", null);
 
         private static DateTimeOffset _tokenExpiry = DateTimeOffset.MinValue;
         private static string? _cachedToken;
